@@ -268,9 +268,7 @@ cleanobj:
 	$(RM) $(BUILD_DIRECTORIES)/*.o
 	
 flash: nrf52832_xxaa
-	@echo Flashing: $(OUTPUT_BINARY_DIRECTORY)/$<.hex
-	nrfjprog --program $(SOFTDEVICE_FILE) -f nrf52 --chiperase
-	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/$<.hex -f nrf52
-	nrfjprog --reset -f nrf52
+	@echo Flashing: $(OUTPUT_BINARY_DIRECTORY)/bootloader_with_s132.hex
+	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/bootloader_with_s132.hex -f nrf52 --chiperase --reset
 
 ## Flash softdevice
