@@ -1,5 +1,6 @@
 PROJECT_NAME := dfu_dual_bank_serial_s132_pca10040
 SDK_PATH = ../../../../../../components
+SOFTDEVICE_HEX = $(SDK_PATH)/softdevice/s132/hex/s132_nrf52_2.0.0_softdevice.hex
 
 export OUTPUT_FILENAME
 #MAKEFILE_NAME := $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
@@ -252,8 +253,8 @@ genbin:
 genhex: 
 	@echo Preparing: $(OUTPUT_FILENAME).hex
 	$(NO_ECHO)$(OBJCOPY) -O ihex $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex
-	#@cp $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex ../../../../../../../bootloader.hex
-	@mergehex -m $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex ../../../../../../../s132_nrf52_2.0.0_softdevice.hex -o ../../../../../../../bootloader_with_s132.hex
+	@mergehex -m $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex $(SOFTDEVICE_HEX) -o $(OUTPUT_BINARY_DIRECTORY)/bootloader_with_s132.hex
+	@cp $(OUTPUT_BINARY_DIRECTORY)/bootloader_with_s132.hex ../../../../../../../
 	 
 echosize:
 	-@echo ''
@@ -268,7 +269,7 @@ cleanobj:
 	
 flash: nrf52832_xxaa
 	@echo Flashing: $(OUTPUT_BINARY_DIRECTORY)/$<.hex
-	nrfjprog --program ../../../../../../../s132_nrf52_2.0.0_softdevice.hex -f nrf52 --chiperase
+	nrfjprog --program $(SOFTDEVICE_FILE) -f nrf52 --chiperase
 	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/$<.hex -f nrf52
 	nrfjprog --reset -f nrf52
 
