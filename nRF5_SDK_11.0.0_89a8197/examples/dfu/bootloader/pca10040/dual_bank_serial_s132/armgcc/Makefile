@@ -2,6 +2,8 @@ PROJECT_NAME := dfu_dual_bank_serial_s132_pca10040
 SDK_PATH = ../../../../../../components
 SOFTDEVICE_HEX = $(SDK_PATH)/softdevice/s132/hex/s132_nrf52_2.0.0_softdevice.hex
 
+BOOTLOADER_WITH_S132_NAME = bootloader_v08_s132_v200
+
 export OUTPUT_FILENAME
 #MAKEFILE_NAME := $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 MAKEFILE_NAME := $(MAKEFILE_LIST)
@@ -186,8 +188,8 @@ default: clean nrf52832_xxaa
 
 #building all targets
 all: clean
-	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e cleanobj
-	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e nrf52832_xxaa
+	@$(MAKE) -s -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e cleanobj
+	@$(MAKE) -s -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e nrf52832_xxaa
 
 #target for printing all targets
 help:
@@ -217,8 +219,7 @@ nrf52832_xxaa: $(BUILD_DIRECTORIES) $(OBJECTS)
 
 ## Create build directories
 $(BUILD_DIRECTORIES):
-	echo $(MAKEFILE_NAME)
-	$(MK) $@
+	@$(MK) $@
 
 # Create objects from C SRC files
 $(OBJECT_DIRECTORY)/%.o: %.c
@@ -243,7 +244,8 @@ $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex: $(OUTPUT_BINARY_DIRECTORY)/$(
 	@echo Preparing: $(OUTPUT_FILENAME).hex
 	$(NO_ECHO)$(OBJCOPY) -O ihex $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex
 
-finalize: genbin genhex echosize
+#finalize: genbin genhex echosize
+finalize: genhex echosize
 
 genbin:
 	@echo Preparing: $(OUTPUT_FILENAME).bin
@@ -251,10 +253,10 @@ genbin:
 
 ## Create binary .hex file from the .out file
 genhex: 
-	@echo Preparing: $(OUTPUT_FILENAME).hex
+	@echo Preparing: $(OUTPUT_FILENAME).hex $(BOOTLOADER_WITH_S132_NAME).hex
 	$(NO_ECHO)$(OBJCOPY) -O ihex $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex
-	@mergehex -m $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex $(SOFTDEVICE_HEX) -o $(OUTPUT_BINARY_DIRECTORY)/bootloader_with_s132.hex
-	@cp $(OUTPUT_BINARY_DIRECTORY)/bootloader_with_s132.hex ../../../../../../../
+	@mergehex -q -m $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex $(SOFTDEVICE_HEX) -o $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
+	@cp $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex ../../../../../../../
 	 
 echosize:
 	-@echo ''
@@ -262,13 +264,11 @@ echosize:
 	-@echo ''
 
 clean:
-	$(RM) $(BUILD_DIRECTORIES)
+	@$(RM) $(BUILD_DIRECTORIES)
 
 cleanobj:
-	$(RM) $(BUILD_DIRECTORIES)/*.o
+	@$(RM) $(BUILD_DIRECTORIES)/*.o
 	
 flash: nrf52832_xxaa
-	@echo Flashing: $(OUTPUT_BINARY_DIRECTORY)/bootloader_with_s132.hex
-	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/bootloader_with_s132.hex -f nrf52 --chiperase --reset
-
-## Flash softdevice
+	@echo Flashing: $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
+	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex -f nrf52 --chiperase --reset
