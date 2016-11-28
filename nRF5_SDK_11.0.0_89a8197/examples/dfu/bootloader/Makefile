@@ -70,6 +70,7 @@ $(abspath $(SDK_PATH)/drivers_nrf/pstorage/pstorage_raw.c) \
 $(abspath $(SDK_PATH)/ble/common/ble_advdata.c) \
 $(abspath $(SDK_PATH)/ble/common/ble_conn_params.c) \
 $(abspath $(SDK_PATH)/ble/ble_services/ble_dfu/ble_dfu.c) \
+$(abspath $(SDK_PATH)/ble/ble_services/ble_dis/ble_dis.c) \
 $(abspath $(SDK_PATH)/ble/common/ble_srv_common.c) \
 $(abspath $(SDK_PATH)/toolchain/system_nrf52.c) \
 $(abspath $(SDK_PATH)/softdevice/common/softdevice_handler/softdevice_handler.c) \
@@ -107,6 +108,7 @@ INC_PATHS += -I$(abspath $(SDK_PATH)/toolchain)
 INC_PATHS += -I$(abspath $(SDK_PATH)/drivers_nrf/common)
 INC_PATHS += -I$(abspath $(SDK_PATH)/softdevice/common/softdevice_handler)
 INC_PATHS += -I$(abspath $(SDK_PATH)/ble/ble_services/ble_dfu)
+INC_PATHS += -I$(abspath $(SDK_PATH)/ble/ble_services/ble_dis)
 
 OBJECT_DIRECTORY = _build
 LISTING_DIRECTORY = $(OBJECT_DIRECTORY)
@@ -273,3 +275,4 @@ cleanobj:
 flash: nrf52832_xxaa
 	@echo Flashing: $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
 	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex -f nrf52 --chiperase --reset
+	#nrfjprog --snr 268003250 --program $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex -f nrf52 --chiperase --reset

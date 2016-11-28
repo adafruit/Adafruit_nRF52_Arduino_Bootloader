@@ -28,6 +28,7 @@
 #include "ble_gatt.h"
 #include "ble_hci.h"
 #include "ble_dfu.h"
+#include "ble_dis.h"
 #include "app_timer.h"
 #include "ble_conn_params.h"
 #include "hci_mem_pool.h"
@@ -46,6 +47,9 @@
 
 #define DEVICE_NAME                          "AdaDfu" // limit of 8 chars                                                /**< Name of device. Will be included in the advertising data. */
 //#define MANUFACTURER_NAME                    "NordicSemiconductor"                                   /**< Manufacturer. Will be passed to Device Information Service. */
+#define DIS_MANUFACTURER                     "Adafruit Industries"
+#define DIS_MODEL                            "Bluefruit Feather52"
+
 
 #define MIN_CONN_INTERVAL                    (uint16_t)(MSEC_TO_UNITS(15, UNIT_1_25_MS))             /**< Minimum acceptable connection interval (11.25 milliseconds). */
 #define MAX_CONN_INTERVAL                    (uint16_t)(MSEC_TO_UNITS(30, UNIT_1_25_MS))             /**< Maximum acceptable connection interval (15 milliseconds). */
@@ -1017,8 +1021,19 @@ static void services_init(void)
     dfu_init_obj.error_handler = service_error_handler;
 
     err_code = ble_dfu_init(&m_dfu, &dfu_init_obj);
-
     APP_ERROR_CHECK(err_code);
+
+    // Adafruit DIS
+    ble_dis_init_t dis_init;
+    memset(&dis_init, 0, sizeof(dis_init));
+
+    ble_srv_ascii_to_utf8(&dis_init.manufact_name_str, DIS_MANUFACTURER);
+    ble_srv_ascii_to_utf8(&dis_init.model_num_str, DIS_MODEL);
+
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&dis_init.dis_attr_md.read_perm);
+    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&dis_init.dis_attr_md.write_perm);
+
+    (void) ble_dis_init(&dis_init);
 }
 
 
