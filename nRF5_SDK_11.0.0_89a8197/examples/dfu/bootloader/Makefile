@@ -143,6 +143,9 @@ CFLAGS += -DNRF52_PAN_64
 CFLAGS += -DSOFTDEVICE_PRESENT
 CFLAGS += -DNRF52_PAN_62
 CFLAGS += -DNRF52_PAN_63
+
+CFLAGS += -DDFU_APP_DATA_RESERVED=8*4096
+
 CFLAGS += -mcpu=cortex-m4
 CFLAGS += -mthumb -mabi=aapcs --std=gnu99
 CFLAGS += -Wall -Werror -Os -g3
@@ -274,5 +277,5 @@ cleanobj:
 	
 flash: nrf52832_xxaa
 	@echo Flashing: $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
-	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex -f nrf52 --chiperase --reset
-	#nrfjprog --snr 268003250 --program $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex -f nrf52 --chiperase --reset
+	#nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex -f nrf52 --chiperase --reset
+	nrfjprog --snr 268003250 --program $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex -f nrf52 --chiperase --reset
