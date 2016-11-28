@@ -71,6 +71,7 @@
 #define led_off(pin)                    nrf_gpio_pin_write(pin, 1-LED_STATE_ON)
 
 #define BOOTLOADER_STARTUP_DFU_INTERVAL 1000
+#define BOOTLOADER_DFU_START_SERIAL     0x4e
 
 #define BOOTLOADER_BUTTON               20                                                      /**< Button used to enter SW update mode. */
 #define BOOTLOADER_OTA_BUTTON           22  // Button used in addition to DFU button, to force OTA DFU
@@ -94,7 +95,6 @@ bool is_ota(void)
   return _ota_update;
 }
 
-#define BOOTLOADER_DFU_START2          0x4e
 
 /**@brief Callback function for asserts in the SoftDevice.
  *
@@ -242,11 +242,12 @@ int main(void)
 {
     uint32_t err_code;
 
-    // Reset from app, used to not re-initialized SoftDevice
-    bool     app_reset = (NRF_POWER->GPREGRET == BOOTLOADER_DFU_START);
-
     // start bootloader either serial or ble
     bool     dfu_start = false;
+
+    // Reset from app, used to not re-initialized SoftDevice
+    bool     app_reset = (NRF_POWER->GPREGRET == BOOTLOADER_DFU_START) ||
+                         (NRF_POWER->GPREGRET == BOOTLOADER_DFU_START_SERIAL);
 
     // Start bootloader in BLE OTA mode
     _ota_update = (NRF_POWER->GPREGRET == BOOTLOADER_DFU_START);
