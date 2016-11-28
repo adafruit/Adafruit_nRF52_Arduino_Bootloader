@@ -40,7 +40,7 @@
 #define DFU_REV_MAJOR                        0x00                                                    /** DFU Major revision number to be exposed. */
 #define DFU_REV_MINOR                        0x08                                                    /** DFU Minor revision number to be exposed. */
 #define DFU_REVISION                         ((DFU_REV_MAJOR << 8) | DFU_REV_MINOR)                  /** DFU Revision number to be exposed. Combined of major and minor versions. */
-#define ADVERTISING_LED_PIN_NO               17                                               /**< Is on when device is advertising. */
+//#define ADVERTISING_LED_PIN_NO               17                                               /**< Is on when device is advertising. */
 #define CONNECTED_LED_PIN_NO                 19                                               /**< Is on when device has connected. */
 #define DFU_SERVICE_HANDLE                   0x000C                                                  /**< Handle of DFU service when DFU service is first service initialized. */
 #define BLE_HANDLE_MAX                       0xFFFF                                                  /**< Max handle value is BLE. */
@@ -121,7 +121,10 @@ static bool                 m_ble_peer_data_valid    = false;                   
 static uint32_t             m_direct_adv_cnt         = APP_DIRECTED_ADV_TIMEOUT;                     /**< Counter of direct advertisements. */
 static uint8_t            * mp_final_packet;                                                         /**< Pointer to final data packet received. When callback for succesful packet handling is received from dfu bank handling a transfer complete response can be sent to peer. */
 
+// Adafruit
 extern void blinky_fast_set(bool isFast);
+extern void blinky_ota_connected(void);
+extern void blinky_ota_disconneted(void);
 
 /**@brief     Function updating Service Changed CCCD and indicate a service change to peer.
  *
@@ -744,7 +747,7 @@ static void advertising_start(void)
         err_code = sd_ble_gap_adv_start(&m_adv_params);
         APP_ERROR_CHECK(err_code);
 
-        led_on(ADVERTISING_LED_PIN_NO);
+//        led_on(ADVERTISING_LED_PIN_NO);
 
         m_is_advertising = true;
     }
@@ -762,7 +765,7 @@ static void advertising_stop(void)
         err_code = sd_ble_gap_adv_stop();
         APP_ERROR_CHECK(err_code);
 
-        led_off(ADVERTISING_LED_PIN_NO);
+//        led_off(ADVERTISING_LED_PIN_NO);
 
         m_is_advertising = false;
     }
@@ -781,8 +784,9 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GAP_EVT_CONNECTED:
+            blinky_ota_connected();
             led_on(CONNECTED_LED_PIN_NO);
-            led_off(ADVERTISING_LED_PIN_NO);
+//            led_off(ADVERTISING_LED_PIN_NO);
 
             m_conn_handle    = p_ble_evt->evt.gap_evt.conn_handle;
             m_is_advertising = false;
@@ -794,8 +798,9 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
                 uint16_t sys_attr_len = 128;
             
                 m_direct_adv_cnt = APP_DIRECTED_ADV_TIMEOUT;
+                blinky_ota_disconneted();
+                blinky_fast_set(false);
                 led_off(CONNECTED_LED_PIN_NO);
-                blinky_fast_set(true);
         
                 err_code = sd_ble_gatts_sys_attr_get(m_conn_handle, 
                                                      sys_attr, 
@@ -955,11 +960,11 @@ static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
  */
 static void leds_init(void)
 {
-    nrf_gpio_cfg_output(ADVERTISING_LED_PIN_NO);
-    nrf_gpio_cfg_output(CONNECTED_LED_PIN_NO);
-
-    led_off(ADVERTISING_LED_PIN_NO);
-    led_off(CONNECTED_LED_PIN_NO);
+      // Adafruit: already done in bootloader's main
+//    nrf_gpio_cfg_output(ADVERTISING_LED_PIN_NO);
+//    nrf_gpio_cfg_output(CONNECTED_LED_PIN_NO);
+//    led_off(ADVERTISING_LED_PIN_NO);
+//    led_off(CONNECTED_LED_PIN_NO);
 }
 
 

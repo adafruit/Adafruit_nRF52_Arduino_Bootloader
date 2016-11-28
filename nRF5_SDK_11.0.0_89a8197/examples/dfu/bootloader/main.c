@@ -84,6 +84,7 @@
 #define SCHED_QUEUE_SIZE                20                                                      /**< Maximum number of events in the scheduler queue. */
 
 bool isDfuUploading = false;
+bool isOTAConnected = false;
 
 APP_TIMER_DEF( blinky_timer_id );
 
@@ -137,7 +138,7 @@ static void blinky_handler(void * p_context)
 
   nrf_gpio_pin_write(LED_STATUS_PIN, state);
 
-  if (is_ota()) nrf_gpio_pin_write(LED_CONNECTION_PIN, state);
+  if (is_ota() && !isOTAConnected) nrf_gpio_pin_write(LED_CONNECTION_PIN, state);
 
 
   // Feed Watchdog just in case application enable it (WDT last through a soft reboot to bootloader)
@@ -156,6 +157,17 @@ void blinky_fast_set(bool isFast)
 {
   isDfuUploading = isFast;
 }
+
+void blinky_ota_connected(void)
+{
+  isOTAConnected = true;
+}
+
+void blinky_ota_disconneted(void)
+{
+  isOTAConnected = false;
+}
+
 
 /**@brief Function for initializing the button module.
  */
