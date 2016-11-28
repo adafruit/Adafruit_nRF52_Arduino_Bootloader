@@ -1,5 +1,5 @@
 PROJECT_NAME := dfu_dual_bank_serial_s132_pca10040
-SDK_PATH = ../../../../../../components
+SDK_PATH = ../../../components
 SOFTDEVICE_HEX = $(SDK_PATH)/softdevice/s132/hex/s132_nrf52_2.0.0_softdevice.hex
 
 BOOTLOADER_WITH_S132_NAME = bootloader_v08_s132_v200
@@ -42,8 +42,8 @@ remduplicates = $(strip $(if $1,$(firstword $1) $(call remduplicates,$(filter-ou
 
 #source common to all targets
 C_SOURCE_FILES += \
-$(abspath ../../../main.c) \
-$(abspath ../../../dfu_ble_svc.c) \
+$(abspath main.c) \
+$(abspath dfu_ble_svc.c) \
 $(abspath $(SDK_PATH)/libraries/util/app_error.c) \
 $(abspath $(SDK_PATH)/libraries/util/app_error_weak.c) \
 $(abspath $(SDK_PATH)/libraries/scheduler/app_scheduler.c) \
@@ -80,13 +80,13 @@ $(abspath $(SDK_PATH)/softdevice/common/softdevice_handler/softdevice_handler_ap
 ASM_SOURCE_FILES  = $(abspath $(SDK_PATH)/toolchain/gcc/gcc_startup_nrf52.s)
 
 #includes common to all targets
-INC_PATHS  = -I$(abspath ../../../config/dfu_dual_bank_serial_s132_pca10040)
-INC_PATHS += -I$(abspath ../../../config)
+INC_PATHS  = -I$(abspath config/dfu_dual_bank_serial_s132_pca10040)
+INC_PATHS += -I$(abspath config)
+INC_PATHS += -I$(abspath ../../bsp)
 INC_PATHS += -I$(abspath $(SDK_PATH)/libraries/bootloader_dfu/hci_transport)
 INC_PATHS += -I$(abspath $(SDK_PATH)/libraries/bootloader_dfu)
 INC_PATHS += -I$(abspath $(SDK_PATH)/libraries/scheduler)
 INC_PATHS += -I$(abspath $(SDK_PATH)/drivers_nrf/config)
-INC_PATHS += -I$(abspath ../../../../../bsp)
 INC_PATHS += -I$(abspath $(SDK_PATH)/drivers_nrf/delay)
 INC_PATHS += -I$(abspath $(SDK_PATH)/libraries/crc16)
 INC_PATHS += -I$(abspath $(SDK_PATH)/softdevice/s132/headers/nrf52)
@@ -211,7 +211,7 @@ vpath %.s $(ASM_PATHS)
 OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
 
 nrf52832_xxaa: OUTPUT_FILENAME := nrf52832_xxaa
-nrf52832_xxaa: LINKER_SCRIPT=../../../dfu_gcc_nrf52.ld
+nrf52832_xxaa: LINKER_SCRIPT=dfu_gcc_nrf52.ld
 
 nrf52832_xxaa: $(BUILD_DIRECTORIES) $(OBJECTS)
 	@echo Linking target: $(OUTPUT_FILENAME).out
@@ -257,7 +257,7 @@ genhex:
 	@echo Preparing: $(OUTPUT_FILENAME).hex $(BOOTLOADER_WITH_S132_NAME).hex
 	$(NO_ECHO)$(OBJCOPY) -O ihex $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex
 	@mergehex -q -m $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex $(SOFTDEVICE_HEX) -o $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
-	@cp $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex ../../../../../../../
+	@cp $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex ../../../../
 	 
 echosize:
 	-@echo ''
