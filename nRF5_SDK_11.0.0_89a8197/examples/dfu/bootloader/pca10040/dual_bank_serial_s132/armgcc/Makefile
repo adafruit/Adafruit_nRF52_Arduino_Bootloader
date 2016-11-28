@@ -9,7 +9,8 @@ export OUTPUT_FILENAME
 MAKEFILE_NAME := $(MAKEFILE_LIST)
 MAKEFILE_DIR := $(dir $(MAKEFILE_NAME) ) 
 
-TEMPLATE_PATH = ../../../../../../components/toolchain/gcc
+TEMPLATE_PATH = $(SDK_PATH)/toolchain/gcc
+
 ifeq ($(OS),Windows_NT)
 include $(TEMPLATE_PATH)/Makefile.windows
 else
