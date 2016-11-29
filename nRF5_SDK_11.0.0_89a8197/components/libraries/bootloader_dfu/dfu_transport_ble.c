@@ -45,7 +45,7 @@
 #define DFU_SERVICE_HANDLE                   0x000C                                                  /**< Handle of DFU service when DFU service is first service initialized. */
 #define BLE_HANDLE_MAX                       0xFFFF                                                  /**< Max handle value is BLE. */
 
-#define DEVICE_NAME                          "AdaDfu" // limit of 8 chars                                                /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                          "AdaDFU" // limit of 8 chars                                                /**< Name of device. Will be included in the advertising data. */
 //#define MANUFACTURER_NAME                    "NordicSemiconductor"                                   /**< Manufacturer. Will be passed to Device Information Service. */
 #define DIS_MANUFACTURER                     "Adafruit Industries"
 #define DIS_MODEL                            "Bluefruit Feather52"
