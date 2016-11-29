@@ -210,9 +210,9 @@ static void ble_stack_init(bool init_softdevice)
     sd_mbr_command_t com = {SD_MBR_COMMAND_INIT_SD, };
     nrf_clock_lf_cfg_t clock_lf_cfg =
     {
-        .source        = NRF_CLOCK_LF_SRC_XTAL,
-        .rc_ctiv       = 0,
-        .rc_temp_ctiv  = 0,
+        .source        = NRF_CLOCK_LF_SRC_RC,
+        .rc_ctiv       = 16,
+        .rc_temp_ctiv  = 2,
         .xtal_accuracy = NRF_CLOCK_LF_XTAL_ACCURACY_20_PPM
     };
 
