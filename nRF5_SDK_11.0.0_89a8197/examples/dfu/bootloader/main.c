@@ -208,7 +208,13 @@ static void ble_stack_init(bool init_softdevice)
 {
     uint32_t         err_code;
     sd_mbr_command_t com = {SD_MBR_COMMAND_INIT_SD, };
-    nrf_clock_lf_cfg_t clock_lf_cfg = NRF_CLOCK_LFCLKSRC;
+    nrf_clock_lf_cfg_t clock_lf_cfg =
+    {
+        .source        = NRF_CLOCK_LF_SRC_XTAL,
+        .rc_ctiv       = 0,
+        .rc_temp_ctiv  = 0,
+        .xtal_accuracy = NRF_CLOCK_LF_XTAL_ACCURACY_20_PPM
+    };
 
     if (init_softdevice)
     {

@@ -146,6 +146,7 @@
 #define ARDUINO_A5_PIN              31    // Analog channel 5
 
 // Low frequency clock source to be used by the SoftDevice
+// Adafruit overwrite by one in
 #define NRF_CLOCK_LFCLKSRC      {.source        = NRF_CLOCK_LF_SRC_XTAL,            \
                                  .rc_ctiv       = 0,                                \
                                  .rc_temp_ctiv  = 0,                                \
