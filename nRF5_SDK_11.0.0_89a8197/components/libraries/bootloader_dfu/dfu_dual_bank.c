@@ -156,7 +156,8 @@ static void dfu_prepare_func_swap_erase(uint32_t image_size)
     mp_storage_handle_active = &m_storage_handle_swap;
 
     m_dfu_state = DFU_STATE_PREPARING;
-    err_code    = pstorage_clear(&m_storage_handle_swap, DFU_IMAGE_MAX_SIZE_BANKED);
+//    err_code    = pstorage_clear(&m_storage_handle_swap, DFU_IMAGE_MAX_SIZE_BANKED);
+    err_code    = pstorage_clear(&m_storage_handle_swap, image_size);
     APP_ERROR_CHECK(err_code);
 }
 
