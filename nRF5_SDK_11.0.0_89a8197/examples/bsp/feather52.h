@@ -37,7 +37,6 @@
 #ifndef FEATHER52_H
 #define FEATHER52_H
 
-// LEDs definitions for PCA10040
 #define LEDS_NUMBER    2
 #define LED_1          17
 #define LED_2          19
