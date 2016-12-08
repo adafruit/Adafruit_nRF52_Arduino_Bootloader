@@ -41,12 +41,14 @@
 #define LEDS_NUMBER    2
 #define LED_1          17
 #define LED_2          19
+#define LED_STATE_ON   1
 
 #define BSP_LED_0      LED_1
 #define BSP_LED_1      LED_2
 
-#define BUTTONS_NUMBER 1
+#define BUTTONS_NUMBER 2
 #define BUTTON_1       20
+#define BUTTON_2       22
 #define BUTTON_PULL    NRF_GPIO_PIN_PULLUP
 #define BSP_BUTTON_0   BUTTON_1
 

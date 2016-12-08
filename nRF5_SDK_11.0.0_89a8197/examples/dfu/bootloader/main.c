@@ -52,21 +52,16 @@
 
 #include "nrf_delay.h"
 
-#define IS_SRVC_CHANGED_CHARACT_PRESENT 1                                                       /**< Include the service_changed characteristic. For DFU this should normally be the case. */
+#define IS_SRVC_CHANGED_CHARACT_PRESENT 1                        /**< Include the service_changed characteristic. For DFU this should normally be the case. */
 
 #define LED_BLINK_INTERVAL              100
-#define LED_STATUS_PIN                  17
-#define LED_CONNECTION_PIN              19
 
-#define LED_STATE_ON                    1
-#define led_on(pin)                     nrf_gpio_pin_write(pin, LED_STATE_ON)
-#define led_off(pin)                    nrf_gpio_pin_write(pin, 1-LED_STATE_ON)
 
 #define BOOTLOADER_STARTUP_DFU_INTERVAL 1000
 #define BOOTLOADER_DFU_START_SERIAL     0x4e
 
-#define BOOTLOADER_BUTTON               20                                                      /**< Button used to enter SW update mode. */
-#define BOOTLOADER_OTA_BUTTON           22  // Button used in addition to DFU button, to force OTA DFU
+#define BOOTLOADER_BUTTON               BUTTON_1                  /**< Button used to enter SW update mode. */
+#define BOOTLOADER_OTA_BUTTON           BUTTON_2                  // Button used in addition to DFU button, to force OTA DFU
 
 #define APP_TIMER_PRESCALER             0                                                       /**< Value of the RTC1 PRESCALER register. */
 #define APP_TIMER_OP_QUEUE_SIZE         4                                                       /**< Size of timer operation queues. */

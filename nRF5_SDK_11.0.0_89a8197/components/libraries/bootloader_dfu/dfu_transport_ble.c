@@ -41,7 +41,7 @@
 #define DFU_REV_MINOR                        0x08                                                    /** DFU Minor revision number to be exposed. */
 #define DFU_REVISION                         ((DFU_REV_MAJOR << 8) | DFU_REV_MINOR)                  /** DFU Revision number to be exposed. Combined of major and minor versions. */
 //#define ADVERTISING_LED_PIN_NO               17                                               /**< Is on when device is advertising. */
-#define CONNECTED_LED_PIN_NO                 19                                               /**< Is on when device has connected. */
+//#define CONNECTED_LED_PIN_NO                 19                                               /**< Is on when device has connected. */
 #define DFU_SERVICE_HANDLE                   0x000C                                                  /**< Handle of DFU service when DFU service is first service initialized. */
 #define BLE_HANDLE_MAX                       0xFFFF                                                  /**< Max handle value is BLE. */
 
@@ -87,11 +87,6 @@
 #define SD_IMAGE_SIZE_OFFSET                 0                                                       /**< Offset in start packet for the size information for SoftDevice. */
 #define BL_IMAGE_SIZE_OFFSET                 4                                                       /**< Offset in start packet for the size information for bootloader. */
 #define APP_IMAGE_SIZE_OFFSET                8                                                       /**< Offset in start packet for the size information for application. */
-
-
-#define LED_STATE_ON                          0
-#define led_on(pin)                           nrf_gpio_pin_write(pin, LED_STATE_ON)
-#define led_off(pin)                          nrf_gpio_pin_write(pin, 1-LED_STATE_ON)
 
 /**@brief Packet type enumeration.
  */
@@ -785,7 +780,7 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
     {
         case BLE_GAP_EVT_CONNECTED:
             blinky_ota_connected();
-            led_on(CONNECTED_LED_PIN_NO);
+            led_on(LED_CONNECTION_PIN);
 //            led_off(ADVERTISING_LED_PIN_NO);
 
             m_conn_handle    = p_ble_evt->evt.gap_evt.conn_handle;
@@ -800,7 +795,7 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
                 m_direct_adv_cnt = APP_DIRECTED_ADV_TIMEOUT;
                 blinky_ota_disconneted();
                 blinky_fast_set(false);
-                led_off(CONNECTED_LED_PIN_NO);
+                led_off(LED_CONNECTION_PIN);
         
                 err_code = sd_ble_gatts_sys_attr_get(m_conn_handle, 
                                                      sys_attr, 

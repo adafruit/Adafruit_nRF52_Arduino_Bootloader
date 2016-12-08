@@ -15,4 +15,11 @@
 #include "nrf_gpio.h"
 #include "feather52.h"
 
+
+#define LED_STATUS_PIN        LED_1
+#define LED_CONNECTION_PIN    LED_2
+
+#define led_on(pin)           nrf_gpio_pin_write(pin, LED_STATE_ON)
+#define led_off(pin)          nrf_gpio_pin_write(pin, 1-LED_STATE_ON)
+
 #endif
