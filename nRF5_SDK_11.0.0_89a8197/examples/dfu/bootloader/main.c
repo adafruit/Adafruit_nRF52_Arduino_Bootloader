@@ -44,21 +44,13 @@
 #include "app_scheduler.h"
 #include "app_timer_appsh.h"
 #include "nrf_error.h"
-#include "bsp.h"
+#include "boards.h"
 #include "softdevice_handler_appsh.h"
 #include "pstorage_platform.h"
 #include "nrf_mbr.h"
 #include "nrf_log.h"
 
 #include "nrf_delay.h"
-
-#if BUTTONS_NUMBER < 1
-#error "Not enough buttons on board"
-#endif
-
-#if LEDS_NUMBER < 1
-#error "Not enough LEDs on board"
-#endif
 
 #define IS_SRVC_CHANGED_CHARACT_PRESENT 1                                                       /**< Include the service_changed characteristic. For DFU this should normally be the case. */
 

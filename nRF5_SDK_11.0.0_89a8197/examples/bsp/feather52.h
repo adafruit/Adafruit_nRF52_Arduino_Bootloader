@@ -38,47 +38,18 @@
 #define FEATHER52_H
 
 // LEDs definitions for PCA10040
-#define LEDS_NUMBER    4
-
-#define LED_START      17
+#define LEDS_NUMBER    2
 #define LED_1          17
-#define LED_2          18
-#define LED_3          19
-#define LED_4          20
-#define LED_STOP       20
-
-#define LEDS_LIST { LED_1, LED_2, LED_3, LED_4 }
+#define LED_2          19
 
 #define BSP_LED_0      LED_1
 #define BSP_LED_1      LED_2
-#define BSP_LED_2      LED_3
-#define BSP_LED_3      LED_4
 
-#define BSP_LED_0_MASK (1<<BSP_LED_0)
-#define BSP_LED_1_MASK (1<<BSP_LED_1)
-#define BSP_LED_2_MASK (1<<BSP_LED_2)
-#define BSP_LED_3_MASK (1<<BSP_LED_3)
-
-#define LEDS_MASK      (BSP_LED_0_MASK | BSP_LED_1_MASK | BSP_LED_2_MASK | BSP_LED_3_MASK)
-/* all LEDs are lit when GPIO is low */
-#define LEDS_INV_MASK  LEDS_MASK
-
-#define BUTTONS_NUMBER 4
-
-#define BUTTON_START   13
-#define BUTTON_1       13
-#define BUTTON_2       14
-#define BUTTON_3       15
-#define BUTTON_4       16
-#define BUTTON_STOP    16
+#define BUTTONS_NUMBER 1
+#define BUTTON_1       20
 #define BUTTON_PULL    NRF_GPIO_PIN_PULLUP
-
-#define BUTTONS_LIST { BUTTON_1, BUTTON_2, BUTTON_3, BUTTON_4 }
-
 #define BSP_BUTTON_0   BUTTON_1
-#define BSP_BUTTON_1   BUTTON_2
-#define BSP_BUTTON_2   BUTTON_3
-#define BSP_BUTTON_3   BUTTON_4
+
 
 #define BSP_BUTTON_0_MASK (1<<BSP_BUTTON_0)
 #define BSP_BUTTON_1_MASK (1<<BSP_BUTTON_1)
@@ -91,30 +62,10 @@
 #define TX_PIN_NUMBER  6 // 11
 #define CTS_PIN_NUMBER 7
 #define RTS_PIN_NUMBER 5
-#define HWFC           true
-
-#define SPIS_MISO_PIN   28  // SPI MISO signal.
-#define SPIS_CSN_PIN    12  // SPI CSN signal.
-#define SPIS_MOSI_PIN   25  // SPI MOSI signal.
-#define SPIS_SCK_PIN    29  // SPI SCK signal.
-
-#define SPIM0_SCK_PIN   29  // SPI clock GPIO pin number.
-#define SPIM0_MOSI_PIN  25  // SPI Master Out Slave In GPIO pin number.
-#define SPIM0_MISO_PIN  28  // SPI Master In Slave Out GPIO pin number.
-#define SPIM0_SS_PIN    12  // SPI Slave Select GPIO pin number.
-
-#define SPIM1_SCK_PIN   2   // SPI clock GPIO pin number.
-#define SPIM1_MOSI_PIN  3   // SPI Master Out Slave In GPIO pin number.
-#define SPIM1_MISO_PIN  4   // SPI Master In Slave Out GPIO pin number.
-#define SPIM1_SS_PIN    5   // SPI Slave Select GPIO pin number.
-
-#define SPIM2_SCK_PIN   12  // SPI clock GPIO pin number.
-#define SPIM2_MOSI_PIN  13  // SPI Master Out Slave In GPIO pin number.
-#define SPIM2_MISO_PIN  14  // SPI Master In Slave Out GPIO pin number.
-#define SPIM2_SS_PIN    15  // SPI Slave Select GPIO pin number.
+#define HWFC           false
 
 // Low frequency clock source to be used by the SoftDevice
-// Adafruit overwrite by one in
+// Adafruit overwrite by one in main.c
 #define NRF_CLOCK_LFCLKSRC      {.source        = NRF_CLOCK_LF_SRC_XTAL,            \
                                  .rc_ctiv       = 0,                                \
                                  .rc_temp_ctiv  = 0,                                \
