@@ -51,8 +51,6 @@ SRC_FILES += \
 
 # Include folders common to all targets
 INC_FOLDERS += \
-  $(PROJ_DIR)/config/secure_dfu_secure_dfu_ble_s132_pca10040 \
-  $(PROJ_DIR)/config \
   $(SDK_ROOT)/components/toolchain/cmsis/include \
   $(PROJ_DIR)/../../bsp \
   $(SDK_ROOT)/components/drivers_nrf/rng \
@@ -76,7 +74,6 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/drivers_nrf/delay \
   $(SDK_ROOT)/components/ble/common \
   $(SDK_ROOT)/components/libraries/fifo \
-  $(SDK_ROOT)/components/libraries/bootloader/ble_dfu/includes \
   $(SDK_ROOT)/components/libraries/svc \
   $(SDK_ROOT)/components/libraries/log \
   $(SDK_ROOT)/components/libraries/hci \
