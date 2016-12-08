@@ -81,8 +81,9 @@ $(abspath $(SDK_PATH)/softdevice/common/softdevice_handler/softdevice_handler_ap
 ASM_SOURCE_FILES  = $(abspath $(SDK_PATH)/toolchain/gcc/gcc_startup_nrf52.s)
 
 #includes common to all targets
-INC_PATHS  = -I$(abspath config/dfu_dual_bank_serial_s132_pca10040)
-INC_PATHS += -I$(abspath config)
+#INC_PATHS  = -I$(abspath config/dfu_dual_bank_serial_s132_pca10040)
+#INC_PATHS += -I$(abspath config)
+INC_PATHS += -I$(abspath ./)
 INC_PATHS += -I$(abspath ../../bsp)
 INC_PATHS += -I$(abspath $(SDK_PATH)/libraries/bootloader_dfu/hci_transport)
 INC_PATHS += -I$(abspath $(SDK_PATH)/libraries/bootloader_dfu)
