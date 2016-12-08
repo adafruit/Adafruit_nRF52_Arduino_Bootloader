@@ -12,7 +12,7 @@ MEMORY
    *  APP_ERROR_CHECK_BOOL(*((uint32_t *)NRF_UICR_BOOT_START_ADDRESS) == BOOTLOADER_REGION_START);
    */
   /*FLASH (rx) : ORIGIN = 0x7A000, LENGTH = 0x4000*/
-  FLASH (rx) : ORIGIN = 0x76000, LENGTH = 0x8000
+  FLASH (rx) : ORIGIN = 0x74000, LENGTH = 0xA000
 
   /** RAM Region for bootloader. This setting is suitable when used with s132. */
   RAM (rwx) :  ORIGIN = 0x20002C00, LENGTH = 0x5380
