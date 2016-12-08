@@ -708,6 +708,11 @@ uint32_t dfu_sd_image_swap(void)
         uint32_t err_code;
         uint32_t sd_start        = SOFTDEVICE_REGION_START;
         uint32_t block_size      = (boot_settings.sd_image_start - sd_start) / 2;
+        
+        /* ##### FIX START ##### */
+        block_size &= ~(uint32_t)(CODE_PAGE_SIZE - 1); 
+        /* ##### FIX END ##### */       
+        
         uint32_t image_end       = boot_settings.sd_image_start + boot_settings.sd_image_size;
 
         uint32_t img_block_start = boot_settings.sd_image_start + 2 * block_size;
