@@ -169,3 +169,4 @@ DUMP_FILE_LIST := \
 	$(NO_ECHO)$(OBJCOPY) -O ihex $< $@
 	@mergehex -q -m $@ $(SOFTDEVICE_HEX) -o $(OUTPUT_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
 	@cp $(OUTPUT_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex ../../
+	#nrfutil dfu genpkg --softdevice $(SOFTDEVICE_HEX) --bootloader $@ bootpkg.zip
