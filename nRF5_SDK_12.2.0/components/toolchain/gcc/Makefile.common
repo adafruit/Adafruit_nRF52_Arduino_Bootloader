@@ -165,5 +165,7 @@ DUMP_FILE_LIST := \
 
 # Create binary .hex file from the .out file
 %.hex: %.out
-	@echo Preparing: $@
+	@echo Preparing: $@ and Merging with SoftDevice
 	$(NO_ECHO)$(OBJCOPY) -O ihex $< $@
+	@mergehex -q -m $@ $(SOFTDEVICE_HEX) -o $(OUTPUT_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
+	@cp $(OUTPUT_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex ../../

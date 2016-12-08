@@ -5,6 +5,9 @@ OUTPUT_DIRECTORY := _build
 SDK_ROOT := ../../../../..
 PROJ_DIR := ../..
 
+SOFTDEVICE_HEX = $(SDK_ROOT)/components/softdevice/s132/hex/s132_nrf52_3.0.0_softdevice.hex
+BOOTLOADER_WITH_S132_NAME = bootloader_s132_v300_debug
+
 $(OUTPUT_DIRECTORY)/nrf52832_xxaa_s132.out: \
   LINKER_SCRIPT  := $(PROJ_DIR)/secure_dfu_gcc_nrf52_debug.ld
 
@@ -172,7 +175,7 @@ LDFLAGS += -Wl,--gc-sections
 LDFLAGS += --specs=nano.specs -lc -lnosys
 
 
-.PHONY: $(TARGETS) default all clean help flash 
+.PHONY: $(TARGETS) default all clean help flash
 
 # Default target - first one defined
 default: nrf52832_xxaa_s132
@@ -191,8 +194,8 @@ $(foreach target, $(TARGETS), $(call define_target, $(target)))
 # Flash the program
 flash: $(OUTPUT_DIRECTORY)/nrf52832_xxaa_s132.hex
 	@echo Flashing: $<
-	nrfjprog --program $< -f nrf52 --sectorerase
-	nrfjprog --reset -f nrf52
+	nrfjprog --program $(OUTPUT_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex -f nrf52 --chiperase --reset
+	#nrfjprog --snr 268003250 --program $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex -f nrf52 --chiperase --reset
 
 erase:
 	nrfjprog --eraseall -f nrf52
