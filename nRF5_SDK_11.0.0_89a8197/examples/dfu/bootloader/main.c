@@ -66,7 +66,7 @@
 #define LED_STATUS_PIN                  17
 #define LED_CONNECTION_PIN              19
 
-#define LED_STATE_ON                    0
+#define LED_STATE_ON                    1
 #define led_on(pin)                     nrf_gpio_pin_write(pin, LED_STATE_ON)
 #define led_off(pin)                    nrf_gpio_pin_write(pin, 1-LED_STATE_ON)
 

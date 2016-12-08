@@ -14,6 +14,9 @@
 
 #include "nrf_gpio.h"
 
+#include "feather52.h"
+
+#if 0
 #if defined(BOARD_NRF6310)
   #include "nrf6310.h"
 #elif defined(BOARD_PCA10000)
@@ -33,7 +36,7 @@
 #elif defined(BOARD_PCA10036)
   #include "pca10036.h"
 #elif defined(BOARD_PCA10040)
-  #include "pca10040.h"
+  #include "feather52.h"
 #elif defined(BOARD_WT51822)
   #include "wt51822.h"
 #elif defined(BOARD_N5DK1)
@@ -43,6 +46,7 @@
 #else
 #error "Board is not defined"
 
+#endif
 #endif
 
 #define LEDS_OFF(leds_mask) do {  NRF_GPIO->OUTSET = (leds_mask) & (LEDS_MASK & LEDS_INV_MASK); \
