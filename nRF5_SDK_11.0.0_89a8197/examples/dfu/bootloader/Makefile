@@ -2,7 +2,7 @@ PROJECT_NAME := dfu_dual_bank_serial_s132_pca10040
 SDK_PATH = ../../../components
 SOFTDEVICE_HEX = $(SDK_PATH)/softdevice/s132/hex/s132_nrf52_2.0.0_softdevice.hex
 
-BOOTLOADER_WITH_S132_NAME = bootloader_v08_s132_v200
+BOOTLOADER_WITH_S132_NAME = bootloader_v050_s132_v200
 
 export OUTPUT_FILENAME
 #MAKEFILE_NAME := $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
