@@ -101,7 +101,7 @@ extern "C" {
 /** @brief  Size of the flash space reserved for application data.
  */
 #ifndef DFU_APP_DATA_RESERVED
-#define DFU_APP_DATA_RESERVED               CODE_PAGE_SIZE * 3
+#define DFU_APP_DATA_RESERVED               CODE_PAGE_SIZE * 7
 #endif
 
 
