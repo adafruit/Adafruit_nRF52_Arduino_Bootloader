@@ -89,7 +89,7 @@
 STATIC_ASSERT( APPDATA_ADDR_START == 0x6D000);
 
 void adafruit_factory_reset(void);
-volatile bool _appdata_erased_complete = false;
+volatile bool _freset_erased_complete = false;
 
 // Adafruit for Blink pattern
 bool isDfuUploading = false;
@@ -361,7 +361,34 @@ static void appdata_pstorage_cb(pstorage_handle_t * p_handle, uint8_t op_code, u
 {
   if ( op_code == PSTORAGE_CLEAR_OP_CODE)
   {
-    _appdata_erased_complete = true;
+    _freset_erased_complete = true;
+  }
+}
+
+void freset_erase_and_wait(pstorage_handle_t* hdl, uint32_t addr, uint32_t size)
+{
+  _freset_erased_complete = false;
+
+  // set address and start erasing
+  hdl->block_id = addr;
+  pstorage_clear(hdl, size);
+
+  // Time to erase a page is 100 ms max
+  // It is better to force a timeout to prevent lock-up
+  uint32_t timeout_tck = (size/CODE_PAGE_SIZE)*100;
+  timeout_tck = APP_TIMER_TICKS(timeout_tck, APP_TIMER_PRESCALER);
+
+  uint32_t start_tck;
+  app_timer_cnt_get(&start_tck);
+
+  while(!_freset_erased_complete)
+  {
+    sd_app_evt_wait();
+    app_sched_execute();
+
+    uint32_t now_tck;
+    app_timer_cnt_get(&now_tck);
+    if ( (now_tck - start_tck) > timeout_tck ) break;
   }
 }
 
@@ -373,32 +400,16 @@ void adafruit_factory_reset(void)
   // Blink fast when erasing
   blinky_fast_set(true);
 
-  static pstorage_handle_t appdata_handle = { .block_id = APPDATA_ADDR_START } ;
+  static pstorage_handle_t freset_handle = { .block_id = APPDATA_ADDR_START } ;
   pstorage_module_param_t  storage_params = { .cb = appdata_pstorage_cb};
 
-  pstorage_register(&storage_params, &appdata_handle);
+  pstorage_register(&storage_params, &freset_handle);
 
   // clear all App Data
-  _appdata_erased_complete = false;
-  pstorage_clear(&appdata_handle, DFU_APP_DATA_RESERVED);
+  freset_erase_and_wait(&freset_handle, APPDATA_ADDR_START, DFU_APP_DATA_RESERVED);
 
-  // Time to erase a page is 100 ms max
-  // It is better to force a timeout to prevent lock-up
-  uint32_t timeout_tck = (DFU_APP_DATA_RESERVED/CODE_PAGE_SIZE)*100;
-  timeout_tck = APP_TIMER_TICKS(timeout_tck, APP_TIMER_PRESCALER);
-
-  uint32_t start_tck;
-  app_timer_cnt_get(&start_tck);
-
-  while(!_appdata_erased_complete)
-  {
-    sd_app_evt_wait();
-    app_sched_execute();
-
-    uint32_t now_tck;
-    app_timer_cnt_get(&now_tck);
-    if ( (now_tck - start_tck) > timeout_tck ) break;
-  }
+  // Only need to erase the 1st page of Application code to make it invalid
+  freset_erase_and_wait(&freset_handle, DFU_BANK_0_REGION_START, CODE_PAGE_SIZE);
 
   // back to normal
   blinky_fast_set(false);
