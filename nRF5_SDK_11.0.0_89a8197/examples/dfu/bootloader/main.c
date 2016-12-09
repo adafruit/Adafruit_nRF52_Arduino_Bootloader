@@ -50,7 +50,20 @@
 #include "nrf_mbr.h"
 #include "nrf_log.h"
 
+#include "nrf_wdt.h"
 #include "nrf_delay.h"
+#include "pstorage.h"
+
+#define ASSERT_STATUS(_state) do {\
+      if ( NRF_SUCCESS != (_state)) {\
+        isFatalError = true;\
+        while(1) { \
+          sd_app_evt_wait();\
+          app_sched_execute();\
+        }\
+      }\
+    } while(0)
+
 
 #define BOOTLOADER_VERSION_REGISTER     NRF_TIMER2->CC[0]
 
@@ -62,7 +75,7 @@
 #define BOOTLOADER_DFU_START_SERIAL     0x4e
 
 #define BOOTLOADER_BUTTON               BUTTON_1                  /**< Button used to enter SW update mode. */
-#define BOOTLOADER_OTA_BUTTON           BUTTON_2                  // Button used in addition to DFU button, to force OTA DFU
+#define FRESET_BUTTON                   BUTTON_2                  // Button used in addition to DFU button, to force OTA DFU
 
 #define APP_TIMER_PRESCALER             0                                                       /**< Value of the RTC1 PRESCALER register. */
 #define APP_TIMER_OP_QUEUE_SIZE         4                                                       /**< Size of timer operation queues. */
@@ -71,8 +84,17 @@
 
 #define SCHED_QUEUE_SIZE                20                                                      /**< Maximum number of events in the scheduler queue. */
 
+// Adafruit for factory reset
+#define APPDATA_ADDR_START              (BOOTLOADER_REGION_START-DFU_APP_DATA_RESERVED)
+STATIC_ASSERT( APPDATA_ADDR_START == 0x6D000);
+
+void adafruit_factory_reset(void);
+volatile bool _appdata_erased_complete = false;
+
+// Adafruit for Blink pattern
 bool isDfuUploading = false;
 bool isOTAConnected = false;
+bool isFatalError = false;
 
 APP_TIMER_DEF( blinky_timer_id );
 
@@ -85,24 +107,11 @@ bool is_ota(void)
 }
 
 
-/**@brief Callback function for asserts in the SoftDevice.
- *
- * @details This function will be called in case of an assert in the SoftDevice.
- *
- * @warning This handler is an example only and does not fit a final product. You need to analyze 
- *          how your product is supposed to react in case of Assert.
- * @warning On assert from the SoftDevice, the system can only recover on reset.
- *
- * @param[in] line_num    Line number of the failing ASSERT call.
- * @param[in] file_name   File name of the failing ASSERT call.
- */
 void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 {
     app_error_handler(0xDEADBEEF, line_num, p_file_name);
 }
 
-/**@brief Function for initialization of LEDs.
- */
 static void leds_init(void)
 {
     nrf_gpio_cfg_output(LED_STATUS_PIN);
@@ -112,6 +121,14 @@ static void leds_init(void)
     led_off(LED_CONNECTION_PIN);
 }
 
+/*
+ * Blinking function, there are a few patterns
+ * - DFU Serial     : LED Status blink
+ * - DFU OTA        : LED Status & Conn blink at the same time
+ * - DFU Flashing   : LED Status blink 2x fast
+ * - Factory Reset  : LED Status blink 2x fast
+ * - Fatal Error    : LED Status & Conn blink one after another
+ */
 static void blinky_handler(void * p_context)
 {
   static uint8_t state = 0;
@@ -128,9 +145,13 @@ static void blinky_handler(void * p_context)
 
   if (is_ota() && !isOTAConnected) nrf_gpio_pin_write(LED_CONNECTION_PIN, state);
 
+  if (isFatalError) nrf_gpio_pin_write(LED_CONNECTION_PIN, 1-state);
 
-  // Feed Watchdog just in case application enable it (WDT last through a soft reboot to bootloader)
-  if ( NRF_WDT->RUNSTATUS ) NRF_WDT->RR[0] = WDT_RR_RR_Reload;
+  // Feed all Watchdog just in case application enable it (WDT last through a soft reboot to bootloader)
+  if ( nrf_wdt_started() )
+  {
+    for (uint8_t i=0; i<8; i++) nrf_wdt_reload_request_set(i);
+  }
 }
 
 /**@brief Function for initializing the timer handler module (app_timer).
@@ -156,13 +177,10 @@ void blinky_ota_disconneted(void)
   isOTAConnected = false;
 }
 
-
-/**@brief Function for initializing the button module.
- */
 static void buttons_init(void)
 {
     nrf_gpio_cfg_sense_input(BOOTLOADER_BUTTON, BUTTON_PULL, NRF_GPIO_PIN_SENSE_LOW);
-    nrf_gpio_cfg_sense_input(BOOTLOADER_OTA_BUTTON, BUTTON_PULL, NRF_GPIO_PIN_SENSE_LOW);
+    nrf_gpio_cfg_sense_input(FRESET_BUTTON, BUTTON_PULL, NRF_GPIO_PIN_SENSE_LOW);
 }
 
 bool button_pressed(uint32_t pin)
@@ -299,8 +317,8 @@ int main(void)
     // DFU button pressed
     dfu_start  = app_reset || button_pressed(BOOTLOADER_BUTTON);
 
-    // DFU + DFU OTA are pressed
-    _ota_update = _ota_update  || ( button_pressed(BOOTLOADER_BUTTON) && button_pressed(BOOTLOADER_OTA_BUTTON) ) ;
+    // DFU + FRESET are pressed --> OTA
+    _ota_update = _ota_update  || ( button_pressed(BOOTLOADER_BUTTON) && button_pressed(FRESET_BUTTON) ) ;
 
     if (dfu_start || (!bootloader_app_is_valid(DFU_BANK_0_REGION_START)))
     {
@@ -317,6 +335,12 @@ int main(void)
       (void) bootloader_dfu_start(false, BOOTLOADER_STARTUP_DFU_INTERVAL);
     }
 
+    // Adafruit Factory reset
+    if ( !button_pressed(BOOTLOADER_BUTTON) && button_pressed(FRESET_BUTTON) )
+    {
+      adafruit_factory_reset();
+    }
+
     app_timer_stop(blinky_timer_id);
 
     if (bootloader_app_is_valid(DFU_BANK_0_REGION_START) && !bootloader_dfu_sd_in_progress())
@@ -325,6 +349,57 @@ int main(void)
         // @note: Only applications running from DFU_BANK_0_REGION_START is supported.
         bootloader_app_start(DFU_BANK_0_REGION_START);
     }
-    
+
     NVIC_SystemReset();
+}
+
+/**
+ * Pstorage callback, fired after erased  Application Data
+ */
+static void appdata_pstorage_cb(pstorage_handle_t * p_handle, uint8_t op_code, uint32_t result,
+                                uint8_t  * p_data, uint32_t  data_len)
+{
+  if ( op_code == PSTORAGE_CLEAR_OP_CODE)
+  {
+    _appdata_erased_complete = true;
+  }
+}
+
+/**
+ * Perform factory reset to erase Application + Data
+ */
+void adafruit_factory_reset(void)
+{
+  // Blink fast when erasing
+  blinky_fast_set(true);
+
+  static pstorage_handle_t appdata_handle = { .block_id = APPDATA_ADDR_START } ;
+  pstorage_module_param_t  storage_params = { .cb = appdata_pstorage_cb};
+
+  pstorage_register(&storage_params, &appdata_handle);
+
+  // clear all App Data
+  _appdata_erased_complete = false;
+  pstorage_clear(&appdata_handle, DFU_APP_DATA_RESERVED);
+
+  // Time to erase a page is 100 ms max
+  // It is better to force a timeout to prevent lock-up
+  uint32_t timeout_tck = (DFU_APP_DATA_RESERVED/CODE_PAGE_SIZE)*100;
+  timeout_tck = APP_TIMER_TICKS(timeout_tck, APP_TIMER_PRESCALER);
+
+  uint32_t start_tck;
+  app_timer_cnt_get(&start_tck);
+
+  while(!_appdata_erased_complete)
+  {
+    sd_app_evt_wait();
+    app_sched_execute();
+
+    uint32_t now_tck;
+    app_timer_cnt_get(&now_tck);
+    if ( (now_tck - start_tck) > timeout_tck ) break;
+  }
+
+  // back to normal
+  blinky_fast_set(false);
 }
