@@ -52,10 +52,11 @@
 
 #include "nrf_delay.h"
 
+#define BOOTLOADER_VERSION_REGISTER     NRF_TIMER2->CC[0]
+
 #define IS_SRVC_CHANGED_CHARACT_PRESENT 1                        /**< Include the service_changed characteristic. For DFU this should normally be the case. */
 
 #define LED_BLINK_INTERVAL              100
-
 
 #define BOOTLOADER_STARTUP_DFU_INTERVAL 1000
 #define BOOTLOADER_DFU_START_SERIAL     0x4e
@@ -272,6 +273,8 @@ int main(void)
     // Initialize.
     timers_init();
     buttons_init();
+
+    BOOTLOADER_VERSION_REGISTER = BOOTLOADER_VERSION;
 
     (void)bootloader_init();
 
