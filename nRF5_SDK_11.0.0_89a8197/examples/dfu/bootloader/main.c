@@ -264,93 +264,93 @@ static void scheduler_init(void)
  */
 int main(void)
 {
-    uint32_t err_code;
+  uint32_t err_code;
 
-    // start bootloader either serial or ble
-    bool     dfu_start = false;
+  // start bootloader either serial or ble
+  bool     dfu_start = false;
 
-    // Reset from app, used to not re-initialized SoftDevice
-    bool     app_reset = (NRF_POWER->GPREGRET == BOOTLOADER_DFU_START) ||
-                         (NRF_POWER->GPREGRET == BOOTLOADER_DFU_START_SERIAL);
+  // Reset from app, used to not re-initialized SoftDevice
+  bool     app_reset = (NRF_POWER->GPREGRET == BOOTLOADER_DFU_START) ||
+      (NRF_POWER->GPREGRET == BOOTLOADER_DFU_START_SERIAL);
 
-    // Start bootloader in BLE OTA mode
-    _ota_update = (NRF_POWER->GPREGRET == BOOTLOADER_DFU_START);
+  // Start bootloader in BLE OTA mode
+  _ota_update = (NRF_POWER->GPREGRET == BOOTLOADER_DFU_START);
 
-    if (app_reset)
-    {
-        NRF_POWER->GPREGRET = 0;
-    }
+  if (app_reset)
+  {
+    NRF_POWER->GPREGRET = 0;
+  }
 
-    leds_init();
+  leds_init();
 
-    // This check ensures that the defined fields in the bootloader corresponds with actual
-    // setting in the chip.
-    APP_ERROR_CHECK_BOOL(*((uint32_t *)NRF_UICR_BOOT_START_ADDRESS) == BOOTLOADER_REGION_START);
-    APP_ERROR_CHECK_BOOL(NRF_FICR->CODEPAGESIZE == CODE_PAGE_SIZE);
+  // This check ensures that the defined fields in the bootloader corresponds with actual
+  // setting in the chip.
+  APP_ERROR_CHECK_BOOL(*((uint32_t *)NRF_UICR_BOOT_START_ADDRESS) == BOOTLOADER_REGION_START);
+  APP_ERROR_CHECK_BOOL(NRF_FICR->CODEPAGESIZE == CODE_PAGE_SIZE);
 
-    // Initialize.
-    timers_init();
-    buttons_init();
+  // Initialize.
+  timers_init();
+  buttons_init();
 
-    BOOTLOADER_VERSION_REGISTER = BOOTLOADER_VERSION;
+  BOOTLOADER_VERSION_REGISTER = BOOTLOADER_VERSION;
 
-    (void)bootloader_init();
+  (void)bootloader_init();
 
-    if (bootloader_dfu_sd_in_progress())
-    {
-        err_code = bootloader_dfu_sd_update_continue();
-        APP_ERROR_CHECK(err_code);
+  if (bootloader_dfu_sd_in_progress())
+  {
+    err_code = bootloader_dfu_sd_update_continue();
+    APP_ERROR_CHECK(err_code);
 
-        ble_stack_init(!app_reset);
-        scheduler_init();
+    ble_stack_init(!app_reset);
+    scheduler_init();
 
-        err_code = bootloader_dfu_sd_update_finalize();
-        APP_ERROR_CHECK(err_code);
-    }
-    else
-    {
-        // If stack is present then continue initialization of bootloader.
-        ble_stack_init(!app_reset);
-        scheduler_init();
-    }
+    err_code = bootloader_dfu_sd_update_finalize();
+    APP_ERROR_CHECK(err_code);
+  }
+  else
+  {
+    // If stack is present then continue initialization of bootloader.
+    ble_stack_init(!app_reset);
+    scheduler_init();
+  }
 
-    // DFU button pressed
-    dfu_start  = app_reset || button_pressed(BOOTLOADER_BUTTON);
+  // DFU button pressed
+  dfu_start  = app_reset || button_pressed(BOOTLOADER_BUTTON);
 
-    // DFU + FRESET are pressed --> OTA
-    _ota_update = _ota_update  || ( button_pressed(BOOTLOADER_BUTTON) && button_pressed(FRESET_BUTTON) ) ;
+  // DFU + FRESET are pressed --> OTA
+  _ota_update = _ota_update  || ( button_pressed(BOOTLOADER_BUTTON) && button_pressed(FRESET_BUTTON) ) ;
 
-    if (dfu_start || (!bootloader_app_is_valid(DFU_BANK_0_REGION_START)))
-    {
-        // Initiate an update of the firmware.
-        err_code = bootloader_dfu_start(_ota_update, 0);
-        APP_ERROR_CHECK(err_code);
-    }
-    else
-    {
-      /* Adafruit Modification
-       * Even DFU is not active, we still force an 1000 ms dfu serial mode when startup
-       * to support auto programming from Arduino IDE
-       */
-      (void) bootloader_dfu_start(false, BOOTLOADER_STARTUP_DFU_INTERVAL);
-    }
+  if (dfu_start || (!bootloader_app_is_valid(DFU_BANK_0_REGION_START)))
+  {
+    // Initiate an update of the firmware.
+    err_code = bootloader_dfu_start(_ota_update, 0);
+    APP_ERROR_CHECK(err_code);
+  }
+  else
+  {
+    /* Adafruit Modification
+     * Even DFU is not active, we still force an 1000 ms dfu serial mode when startup
+     * to support auto programming from Arduino IDE
+     */
+    (void) bootloader_dfu_start(false, BOOTLOADER_STARTUP_DFU_INTERVAL);
+  }
 
-    // Adafruit Factory reset
-    if ( !button_pressed(BOOTLOADER_BUTTON) && button_pressed(FRESET_BUTTON) )
-    {
-      adafruit_factory_reset();
-    }
+  // Adafruit Factory reset
+  if ( !button_pressed(BOOTLOADER_BUTTON) && button_pressed(FRESET_BUTTON) )
+  {
+    adafruit_factory_reset();
+  }
 
-    app_timer_stop(blinky_timer_id);
+  app_timer_stop(blinky_timer_id);
 
-    if (bootloader_app_is_valid(DFU_BANK_0_REGION_START) && !bootloader_dfu_sd_in_progress())
-    {
-        // Select a bank region to use as application region.
-        // @note: Only applications running from DFU_BANK_0_REGION_START is supported.
-        bootloader_app_start(DFU_BANK_0_REGION_START);
-    }
+  if (bootloader_app_is_valid(DFU_BANK_0_REGION_START) && !bootloader_dfu_sd_in_progress())
+  {
+    // Select a bank region to use as application region.
+    // @note: Only applications running from DFU_BANK_0_REGION_START is supported.
+    bootloader_app_start(DFU_BANK_0_REGION_START);
+  }
 
-    NVIC_SystemReset();
+  NVIC_SystemReset();
 }
 
 /**
