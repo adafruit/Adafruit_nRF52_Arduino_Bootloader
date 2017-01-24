@@ -32,7 +32,12 @@
 #define APP_TIMER_PRESCALER         0
 
 #define IRQ_ENABLED             0x01                    /**< Field identifying if an interrupt is enabled. */
-#define MAX_NUMBER_INTERRUPTS   32                      /**< Maximum number of interrupts available. */
+
+#ifdef NRF52
+#define MAX_NUMBER_INTERRUPTS  39
+#else
+#define MAX_NUMBER_INTERRUPTS  32                                       /**< Maximum number of interrupts available. */
+#endif
 
 /**@brief Enumeration for specifying current bootloader status.
  */
