@@ -133,7 +133,6 @@ static void wait_for_events(void)
         // Forced startup dfu mode timeout without any received packet
         if (_terminate_startup_dfu)
         {
-          dfu_transport_serial_close();
           return;
         }
     }
@@ -334,6 +333,9 @@ uint32_t bootloader_dfu_start(bool ota, uint32_t timeout_ms)
     }
 
     wait_for_events();
+
+    // Close Serial transport after done
+    if ( !ota ) dfu_transport_serial_close();
 
     return err_code;
 }
