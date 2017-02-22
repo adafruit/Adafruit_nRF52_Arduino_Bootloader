@@ -41,6 +41,8 @@ OBJDUMP         := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-objdump'
 OBJCOPY         := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-objcopy'
 SIZE            := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-size'
 
+NRFUTIL = nrfutil
+
 #function for removing duplicates in a list
 remduplicates = $(strip $(if $1,$(firstword $1) $(call remduplicates,$(filter-out $(firstword $1),$1))))
 
@@ -221,7 +223,7 @@ vpath %.s $(ASM_PATHS)
 
 OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
 
-nrf52832_xxaa: OUTPUT_FILENAME := nrf52832_xxaa
+nrf52832_xxaa: OUTPUT_FILENAME := bootloader
 nrf52832_xxaa: LINKER_SCRIPT=dfu_gcc_nrf52.ld
 
 nrf52832_xxaa: $(BUILD_DIRECTORIES) $(OBJECTS)
@@ -259,7 +261,7 @@ $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex: $(OUTPUT_BINARY_DIRECTORY)/$(
 	$(NO_ECHO)$(OBJCOPY) -O ihex $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex
 
 #finalize: genbin genhex echosize
-finalize: genhex echosize
+finalize: genhex genpkg echosize
 
 genbin:
 	@echo Preparing: $(OUTPUT_FILENAME).bin
@@ -271,7 +273,12 @@ genhex:
 	$(NO_ECHO)$(OBJCOPY) -O ihex $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex
 	@mergehex -q -m $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex $(SOFTDEVICE_HEX) -o $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
 	@cp $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex ../../../../
-	 
+
+## Create pkg file for bootloader only and bootloader+SD combo to use with DFU
+genpkg:
+	@echo Preparing: $(OUTPUT_FILENAME).zip $(BOOTLOADER_WITH_S132_NAME).zip
+	@$(NRFUTIL) dfu genpkg --dev-type 0x0052 --dev-revision 0xADAF --bootloader $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex ../../../../$(OUTPUT_FILENAME).zip
+	@$(NRFUTIL) dfu genpkg --dev-type 0x0052 --dev-revision 0xADAF --bootloader $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex --softdevice $(SOFTDEVICE_HEX) ../../../../$(BOOTLOADER_WITH_S132_NAME).zip 
 echosize:
 	-@echo ''
 	$(NO_ECHO)$(SIZE) $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out

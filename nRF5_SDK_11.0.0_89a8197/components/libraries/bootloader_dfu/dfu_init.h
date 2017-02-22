@@ -103,7 +103,7 @@ typedef struct
  * @retval NRF_ERROR_INVALID_LENGTH If the size of the init packet is not within the limits of 
  *                                  the init packet handler.
  */
-uint32_t dfu_init_prevalidate(uint8_t * p_init_data, uint32_t init_data_len);
+uint32_t dfu_init_prevalidate(uint8_t * p_init_data, uint32_t init_data_len, uint8_t image_type);
 
 /**@brief DFU postvalidate call for post-checking the received image using the init packet.
  *

@@ -29,9 +29,9 @@
 
 #include "app_timer_appsh.h"
 
-#define APP_TIMER_PRESCALER         0
+#define APP_TIMER_PRESCALER    0
 
-#define IRQ_ENABLED             0x01                    /**< Field identifying if an interrupt is enabled. */
+#define IRQ_ENABLED            0x01                    /**< Field identifying if an interrupt is enabled. */
 
 #ifdef NRF52
 #define MAX_NUMBER_INTERRUPTS  39

@@ -502,7 +502,7 @@ uint32_t dfu_init_pkt_complete(void)
     
     if (m_dfu_state == DFU_STATE_RX_INIT_PKT)
     {
-        err_code = dfu_init_prevalidate(m_init_packet, m_init_packet_length);
+        err_code = dfu_init_prevalidate(m_init_packet, m_init_packet_length, m_start_packet.dfu_update_mode);
         if (err_code == NRF_SUCCESS)
         {
             m_dfu_state = DFU_STATE_RX_DATA_PKT;

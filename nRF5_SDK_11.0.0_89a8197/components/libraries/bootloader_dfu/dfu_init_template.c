@@ -47,6 +47,12 @@
 #include "nrf_error.h"
 #include "crc16.h"
 
+// ADAFRUIT
+// All firmware init data must has Device Type ADAFRUIT_DEVICE_TYPE
+// SD + Bootloader upgrade must have ADAFRUIT_SD_UNLOCK_CODE in Device Revision
+#define ADAFRUIT_DEVICE_TYPE                0x0052 // for nrf52
+#define ADAFRUIT_SD_UNLOCK_CODE             0xADAF
+
 #define DFU_INIT_PACKET_EXT_LENGTH_MIN      2                       //< Minimum length of the extended init packet. The extended init packet may contain a CRC, a HASH, or other data. This value must be changed according to the requirements of the system. The template uses a minimum value of two in order to hold a CRC. */
 #define DFU_INIT_PACKET_EXT_LENGTH_MAX      10                      //< Maximum length of the extended init packet. The extended init packet may contain a CRC, a HASH, or other data. This value must be changed according to the requirements of the system. The template uses a maximum value of 10 in order to hold a CRC and any padded data on transport layer without overflow. */
 
@@ -54,7 +60,7 @@ static uint8_t m_extended_packet[DFU_INIT_PACKET_EXT_LENGTH_MAX];   //< Data arr
 static uint8_t m_extended_packet_length;                            //< Length of the extended data received with init packet. */
 
 
-uint32_t dfu_init_prevalidate(uint8_t * p_init_data, uint32_t init_data_len)
+uint32_t dfu_init_prevalidate(uint8_t * p_init_data, uint32_t init_data_len, uint8_t image_type)
 {
     uint32_t i = 0;
     
@@ -87,29 +93,40 @@ uint32_t dfu_init_prevalidate(uint8_t * p_init_data, uint32_t init_data_len)
            &p_init_packet->softdevice[p_init_packet->softdevice_len],
            m_extended_packet_length);
 
-/** [DFU init application version] */
+    /** [DFU init application version] */
     // To support application versioning, this check should be updated.
     // This template allows for any application to be installed. However, 
     // customers can place a revision number at the bottom of the application 
     // to be verified by the bootloader. This can be done at a location 
     // relative to the application, for example the application start 
     // address + 0x0100.
-/** [DFU init application version] */
+    /** [DFU init application version] */
     
     // First check to verify the image to be transfered matches the device type.
     // If no Device type is present in DFU_DEVICE_INFO then any image will be accepted.
-    if ((DFU_DEVICE_INFO->device_type != DFU_DEVICE_TYPE_EMPTY) &&
-        (p_init_packet->device_type != DFU_DEVICE_INFO->device_type))
-    {
-        return NRF_ERROR_INVALID_DATA;
-    }
+//    if ((DFU_DEVICE_INFO->device_type != DFU_DEVICE_TYPE_EMPTY) &&
+//        (p_init_packet->device_type != DFU_DEVICE_INFO->device_type))
+//    {
+//        return NRF_ERROR_INVALID_DATA;
+//    }
     
     // Second check to verify the image to be transfered matches the device revision.
     // If no Device revision is present in DFU_DEVICE_INFO then any image will be accepted.
-    if ((DFU_DEVICE_INFO->device_rev != DFU_DEVICE_REVISION_EMPTY) &&
-        (p_init_packet->device_rev != DFU_DEVICE_INFO->device_rev))
+    // if ((DFU_DEVICE_INFO->device_rev != DFU_DEVICE_REVISION_EMPTY) &&
+    //    (p_init_packet->device_rev != DFU_DEVICE_INFO->device_rev))
+
+    if ( p_init_packet->device_type != ADAFRUIT_DEVICE_TYPE )
     {
-        return NRF_ERROR_INVALID_DATA;
+        return NRF_ERROR_FORBIDDEN;
+    }
+
+    // Adafruit unlock code must match to upgrade SoftDevice and/or Bootloader
+    if ( image_type & (DFU_UPDATE_SD | DFU_UPDATE_BL) )
+    {
+      if (p_init_packet->device_rev != ADAFRUIT_SD_UNLOCK_CODE)
+      {
+        return NRF_ERROR_FORBIDDEN;
+      }
     }
 
     // Third check: Check the array of supported SoftDevices by this application.
