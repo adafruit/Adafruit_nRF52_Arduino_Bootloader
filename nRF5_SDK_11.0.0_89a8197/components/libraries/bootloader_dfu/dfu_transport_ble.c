@@ -49,6 +49,7 @@
 //#define MANUFACTURER_NAME                    "NordicSemiconductor"                                   /**< Manufacturer. Will be passed to Device Information Service. */
 #define DIS_MANUFACTURER                     "Adafruit Industries"
 #define DIS_MODEL                            "Bluefruit Feather52"
+#define DIS_FIRMWARE                         "S132 2.0.1, 0.5.0" // Update when upgrade bootloader
 
 
 #define MIN_CONN_INTERVAL                    (uint16_t)(MSEC_TO_UNITS(15, UNIT_1_25_MS))             /**< Minimum acceptable connection interval (11.25 milliseconds). */
@@ -1029,6 +1030,7 @@ static void services_init(void)
 
     ble_srv_ascii_to_utf8(&dis_init.manufact_name_str, DIS_MANUFACTURER);
     ble_srv_ascii_to_utf8(&dis_init.model_num_str, DIS_MODEL);
+    ble_srv_ascii_to_utf8(&dis_init.fw_rev_str, DIS_FIRMWARE);
 
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&dis_init.dis_attr_md.read_perm);
     BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&dis_init.dis_attr_md.write_perm);
