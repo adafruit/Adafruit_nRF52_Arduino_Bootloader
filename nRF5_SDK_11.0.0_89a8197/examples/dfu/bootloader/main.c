@@ -62,7 +62,18 @@
 #define LED_BLINK_INTERVAL              100
 
 #define BOOTLOADER_STARTUP_DFU_INTERVAL 1000
-#define BOOTLOADER_DFU_START_SERIAL     0x4e
+
+/* Magic that written to NRF_POWER->GPREGRET by application when it wish to go into DFU
+ * - BOOTLOADER_DFU_OTA_MAGIC used by BLEDfu service : SD is already init
+ * - BOOTLOADER_DFU_OTA_FULLRESET_MAGIC entered by soft reset : SD is not init
+ * - BOOTLOADER_DFU_SERIAL_MAGIC entered by soft reset : SD is not init
+ *
+ * Note: for BOOTLOADER_DFU_OTA_MAGIC Softdevice should not initialized. In other case SD must be initialized
+ */
+#define BOOTLOADER_DFU_OTA_MAGIC            BOOTLOADER_DFU_START // 0xB1
+#define BOOTLOADER_DFU_OTA_FULLRESET_MAGIC  0xA8
+#define BOOTLOADER_DFU_SERIAL_MAGIC         0x4e
+//#define
 
 #define BOOTLOADER_BUTTON               BUTTON_1                  /**< Button used to enter SW update mode. */
 #define FRESET_BUTTON                   BUTTON_2                  // Button used in addition to DFU button, to force OTA DFU
@@ -253,18 +264,19 @@ int main(void)
 {
   uint32_t err_code;
 
+  // SD is already Initialized in case of BOOTLOADER_DFU_OTA_MAGIC
+  bool sd_inited = (NRF_POWER->GPREGRET == BOOTLOADER_DFU_OTA_MAGIC);
+
+  // Start Bootloader in BLE OTA mode
+  _ota_update = (NRF_POWER->GPREGRET == BOOTLOADER_DFU_OTA_MAGIC) ||
+                (NRF_POWER->GPREGRET == BOOTLOADER_DFU_OTA_FULLRESET_MAGIC);
+
   // start bootloader either serial or ble
-  bool     dfu_start = false;
+  bool dfu_start = _ota_update || (NRF_POWER->GPREGRET == BOOTLOADER_DFU_SERIAL_MAGIC);
 
-  // Reset from app, used to not re-initialized SoftDevice
-  bool     app_reset = (NRF_POWER->GPREGRET == BOOTLOADER_DFU_START) ||
-      (NRF_POWER->GPREGRET == BOOTLOADER_DFU_START_SERIAL);
-
-  // Start bootloader in BLE OTA mode
-  _ota_update = (NRF_POWER->GPREGRET == BOOTLOADER_DFU_START);
-
-  if (app_reset)
+  if (dfu_start)
   {
+    // Clear GPREGRET if it is our values
     NRF_POWER->GPREGRET = 0;
   }
 
@@ -288,7 +300,7 @@ int main(void)
     err_code = bootloader_dfu_sd_update_continue();
     APP_ERROR_CHECK(err_code);
 
-    ble_stack_init(!app_reset);
+    ble_stack_init(!sd_inited);
     scheduler_init();
 
     err_code = bootloader_dfu_sd_update_finalize();
@@ -297,12 +309,12 @@ int main(void)
   else
   {
     // If stack is present then continue initialization of bootloader.
-    ble_stack_init(!app_reset);
+    ble_stack_init(!sd_inited);
     scheduler_init();
   }
 
   // DFU button pressed
-  dfu_start  = app_reset || button_pressed(BOOTLOADER_BUTTON);
+  dfu_start  = dfu_start || button_pressed(BOOTLOADER_BUTTON);
 
   // DFU + FRESET are pressed --> OTA
   _ota_update = _ota_update  || ( button_pressed(BOOTLOADER_BUTTON) && button_pressed(FRESET_BUTTON) ) ;
