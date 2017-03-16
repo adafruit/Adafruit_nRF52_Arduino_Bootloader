@@ -54,16 +54,6 @@
 #include "nrf_delay.h"
 #include "pstorage.h"
 
-#define ASSERT_STATUS(_state) do {\
-      if ( NRF_SUCCESS != (_state)) {\
-        isFatalError = true;\
-        while(1) { \
-          sd_app_evt_wait();\
-          app_sched_execute();\
-        }\
-      }\
-    } while(0)
-
 
 #define BOOTLOADER_VERSION_REGISTER     NRF_TIMER2->CC[0]
 
@@ -92,9 +82,8 @@ void adafruit_factory_reset(void);
 volatile bool _freset_erased_complete = false;
 
 // Adafruit for Blink pattern
-bool isDfuUploading = false;
+bool isBlinkFast = false;
 bool isOTAConnected = false;
-bool isFatalError = false;
 
 APP_TIMER_DEF( blinky_timer_id );
 
@@ -137,15 +126,13 @@ static void blinky_handler(void * p_context)
   count++;
 
   // if not uploading then blink slow (interval/2)
-  if ( !isDfuUploading && count%2 ) return;
+  if ( !isBlinkFast && count%2 ) return;
 
   state = 1-state;
 
   nrf_gpio_pin_write(LED_STATUS_PIN, state);
 
   if (is_ota() && !isOTAConnected) nrf_gpio_pin_write(LED_CONNECTION_PIN, state);
-
-  if (isFatalError) nrf_gpio_pin_write(LED_CONNECTION_PIN, 1-state);
 
   // Feed all Watchdog just in case application enable it (WDT last through a soft reboot to bootloader)
   if ( nrf_wdt_started() )
@@ -164,7 +151,7 @@ static void timers_init(void)
 
 void blinky_fast_set(bool isFast)
 {
-  isDfuUploading = isFast;
+  isBlinkFast = isFast;
 }
 
 void blinky_ota_connected(void)
@@ -397,8 +384,9 @@ void freset_erase_and_wait(pstorage_handle_t* hdl, uint32_t addr, uint32_t size)
  */
 void adafruit_factory_reset(void)
 {
-  // Blink fast when erasing
+  // Blink fast RED and turn on BLUE when erasing
   blinky_fast_set(true);
+  led_on(LED_CONNECTION_PIN);
 
   static pstorage_handle_t freset_handle = { .block_id = APPDATA_ADDR_START } ;
   pstorage_module_param_t  storage_params = { .cb = appdata_pstorage_cb};
@@ -413,4 +401,5 @@ void adafruit_factory_reset(void)
 
   // back to normal
   blinky_fast_set(false);
+  led_off(LED_CONNECTION_PIN);
 }
