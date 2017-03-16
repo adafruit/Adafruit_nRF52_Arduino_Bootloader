@@ -4,5 +4,8 @@ This repository contains the bootloader for the Adafruit nRF52 Feather boards.
 
 It is based on nRF52 SDK 11.0.0 using the classic serial and OTA update options, and adds the following additional features:
 
+- Adds a special bootloader blinky pattern on the status LED
 - Checks the factory reset pin status at startup and clears the device if the pin is GND'ed
 - Adds a Device Information Service (DIS) in bootloader mode with Adafruit Industries as the manufacturer, plus some meta data like the SoftDevice family and version so that we can distinguish nRF51 from nRF52 in the Bluefruit LE Connect apps.
+
+Note: The bootloader .hex file gets merged with the SoftDevice .hex file since they are dependent on each other due to the OTA DFU support, and to avoid having to flash multiple binaries or any version conflicts between the two.
