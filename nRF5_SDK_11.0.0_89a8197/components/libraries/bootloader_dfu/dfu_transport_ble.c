@@ -48,7 +48,7 @@
 #define DEVICE_NAME                          "AdaDFU" // limit of 8 chars                                                /**< Name of device. Will be included in the advertising data. */
 //#define MANUFACTURER_NAME                    "NordicSemiconductor"                                   /**< Manufacturer. Will be passed to Device Information Service. */
 #define DIS_MANUFACTURER                     "Adafruit Industries"
-#define DIS_MODEL                            "Bluefruit Feather52"
+#define DIS_MODEL                            "Bluefruit Feather 52"
 #define DIS_FIRMWARE                         "S132 2.0.1, 0.5.0" // Update when upgrade bootloader
 
 
