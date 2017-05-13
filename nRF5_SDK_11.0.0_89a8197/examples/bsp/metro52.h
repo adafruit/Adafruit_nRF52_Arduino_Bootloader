@@ -47,6 +47,7 @@
 
 #define BUTTONS_NUMBER 1
 #define BUTTON_1       18
+#define BUTTON_2       22
 #define BUTTON_PULL    NRF_GPIO_PIN_PULLUP
 #define BSP_BUTTON_0   BUTTON_1
 
