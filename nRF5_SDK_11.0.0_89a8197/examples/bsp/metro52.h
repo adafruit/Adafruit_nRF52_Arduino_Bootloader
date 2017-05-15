@@ -37,15 +37,18 @@
 #ifndef METRO52_H
 #define METRO52_H
 
-#define LEDS_NUMBER    2
+// Note: FRST and LED2 are on the same pin, so can't be used together
+//       LED2 will be disabled since it is less critical
+
+#define LEDS_NUMBER    1
 #define LED_1          29
-#define LED_2          22
+//#define LED_2          22
 #define LED_STATE_ON   1
 
 #define BSP_LED_0      LED_1
-#define BSP_LED_1      LED_2
+//#define BSP_LED_1      LED_2
 
-#define BUTTONS_NUMBER 1
+#define BUTTONS_NUMBER 2
 #define BUTTON_1       18
 #define BUTTON_2       22
 #define BUTTON_PULL    NRF_GPIO_PIN_PULLUP

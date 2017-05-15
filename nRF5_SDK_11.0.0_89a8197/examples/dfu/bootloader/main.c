@@ -17,9 +17,9 @@
  * @ingroup dfu_bootloader_api
  * @brief Bootloader project main file.
  *
- * -# Receive start data packet. 
- * -# Based on start packet, prepare NVM area to store received data. 
- * -# Receive data packet. 
+ * -# Receive start data packet.
+ * -# Based on start packet, prepare NVM area to store received data.
+ * -# Receive data packet.
  * -# Validate data packet.
  * -# Write Data packet to NVM.
  * -# If not finished - Wait for next packet.
@@ -115,10 +115,14 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 static void leds_init(void)
 {
     nrf_gpio_cfg_output(LED_STATUS_PIN);
+#if LEDS_NUMBER > 1
     nrf_gpio_cfg_output(LED_CONNECTION_PIN);
+#endif
 
     led_off(LED_STATUS_PIN);
+#if LEDS_NUMBER > 1
     led_off(LED_CONNECTION_PIN);
+#endif
 }
 
 /*
@@ -143,7 +147,9 @@ static void blinky_handler(void * p_context)
 
   nrf_gpio_pin_write(LED_STATUS_PIN, state);
 
+#if LEDS_NUMBER > 1
   if (is_ota() && !isOTAConnected) nrf_gpio_pin_write(LED_CONNECTION_PIN, state);
+#endif
 
   // Feed all Watchdog just in case application enable it (WDT last through a soft reboot to bootloader)
   if ( nrf_wdt_started() )
@@ -204,8 +210,8 @@ static void sys_evt_dispatch(uint32_t event)
  *
  * @details Initializes the SoftDevice and the BLE event interrupt.
  *
- * @param[in] init_softdevice  true if SoftDevice should be initialized. The SoftDevice must only 
- *                             be initialized if a chip reset has occured. Soft reset from 
+ * @param[in] init_softdevice  true if SoftDevice should be initialized. The SoftDevice must only
+ *                             be initialized if a chip reset has occured. Soft reset from
  *                             application must not reinitialize the SoftDevice.
  */
 static void ble_stack_init(bool init_softdevice)
@@ -225,10 +231,10 @@ static void ble_stack_init(bool init_softdevice)
         err_code = sd_mbr_command(&com);
         APP_ERROR_CHECK(err_code);
     }
-    
+
     err_code = sd_softdevice_vector_table_base_set(BOOTLOADER_REGION_START);
     APP_ERROR_CHECK(err_code);
-   
+
     SOFTDEVICE_HANDLER_APPSH_INIT(&clock_lf_cfg, true);
 
     // Enable BLE stack.
@@ -240,7 +246,7 @@ static void ble_stack_init(bool init_softdevice)
     ble_enable_params.gatts_enable_params.service_changed = IS_SRVC_CHANGED_CHARACT_PRESENT;
     err_code = softdevice_enable(&ble_enable_params);
     APP_ERROR_CHECK(err_code);
-    
+
     err_code = softdevice_sys_evt_handler_set(sys_evt_dispatch);
     APP_ERROR_CHECK(err_code);
 }
@@ -398,7 +404,9 @@ void adafruit_factory_reset(void)
 {
   // Blink fast RED and turn on BLUE when erasing
   blinky_fast_set(true);
+#if LEDS_NUMBER > 1
   led_on(LED_CONNECTION_PIN);
+#endif
 
   static pstorage_handle_t freset_handle = { .block_id = APPDATA_ADDR_START } ;
   pstorage_module_param_t  storage_params = { .cb = appdata_pstorage_cb};
@@ -413,5 +421,7 @@ void adafruit_factory_reset(void)
 
   // back to normal
   blinky_fast_set(false);
+#if LEDS_NUMBER > 1
   led_off(LED_CONNECTION_PIN);
+#endif
 }

@@ -13,11 +13,17 @@
 #define BOARDS_H
 
 #include "nrf_gpio.h"
-#include "feather52.h"
+#include "metro52.h"
 
+// Make sure we have at least two buttons (DFU + FRESET since DFU+FRST=OTA)
+#if BUTTONS_NUMBER < 2
+#error "At least two buttons required in the BSP (see 'BUTTONS_NUMBER')"
+#endif
 
 #define LED_STATUS_PIN        LED_1
+#if LEDS_NUMBER > 1
 #define LED_CONNECTION_PIN    LED_2
+#endif
 
 #define led_on(pin)           nrf_gpio_pin_write(pin, LED_STATE_ON)
 #define led_off(pin)          nrf_gpio_pin_write(pin, 1-LED_STATE_ON)
