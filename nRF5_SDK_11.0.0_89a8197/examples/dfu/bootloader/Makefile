@@ -5,9 +5,8 @@ VERSION_MAJOR    = 0
 VERSION_MINOR    = 5
 VERSION_REVISION = 0
 
-BOOTLOADER_WITH_S132_NAME = bootloader_v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s132_v201
+BOOTLOADER_S132_SUFFIX = bootloader_v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s132_v201
 
-export OUTPUT_FILENAME
 MAKEFILE_NAME := $(MAKEFILE_LIST)
 MAKEFILE_DIR := $(dir $(MAKEFILE_NAME) ) 
 
@@ -133,7 +132,6 @@ BUILD_DIRECTORIES := $(sort $(OBJECT_DIRECTORY) $(OUTPUT_BINARY_DIRECTORY) $(LIS
 
 CFLAGS += -DBOOTLOADER_VERSION=0x0$(VERSION_MAJOR)0$(VERSION_MINOR)0$(VERSION_REVISION)
 CFLAGS += -DNRF52
-CFLAGS += -DBOARD_FEATHER52
 CFLAGS += -DNRF52_PAN_12
 CFLAGS += -DNRF52_PAN_15
 CFLAGS += -DNRF52_PAN_58
@@ -182,7 +180,6 @@ LDFLAGS += --specs=nano.specs -lc -lnosys
 # Assembler flags
 ASMFLAGS += -x assembler-with-cpp
 ASMFLAGS += -DNRF52
-ASMFLAGS += -DBOARD_FEATHER52
 ASMFLAGS += -DNRF52_PAN_12
 ASMFLAGS += -DNRF52_PAN_15
 ASMFLAGS += -DNRF52_PAN_58
@@ -206,17 +203,24 @@ ASMFLAGS += -DNRF52_PAN_62
 ASMFLAGS += -DNRF52_PAN_63
 
 #default target - first one defined
-default: clean feather52
+default: all
 
 #building all targets
-all: clean
-	@$(MAKE) -s -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e cleanobj
+all:
+	@$(MAKE) -s -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e clean
+	@echo Making Feather52 board
+	@echo ----------------------
 	@$(MAKE) -s -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e feather52
+	@$(MAKE) -s -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e clean
+	@echo Making Metro52 board
+	@echo --------------------
+	@$(MAKE) -s -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e metro52
 
 #target for printing all targets
 help:
 	@echo following targets are available:
-	@echo 	feather52
+	@echo - feather52
+	@echo - metro52
 
 C_SOURCE_FILE_NAMES = $(notdir $(C_SOURCE_FILES))
 C_PATHS = $(call remduplicates, $(dir $(C_SOURCE_FILES) ) )
@@ -230,11 +234,25 @@ vpath %.c $(C_PATHS)
 vpath %.s $(ASM_PATHS)
 
 OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
+LINKER_SCRIPT = dfu_gcc_nrf52.ld
 
-feather52: OUTPUT_FILENAME := bootloader
-feather52: LINKER_SCRIPT=dfu_gcc_nrf52.ld
+export OUTPUT_FILENAME
+export BOOTLOADER_WITH_S132_NAME
 
+# Target for Feather nrf52 board
+feather52: OUTPUT_FILENAME := feather52_bootloader
+feather52: BOOTLOADER_WITH_S132_NAME := feather52_$(BOOTLOADER_S132_SUFFIX)
+feather52: CFLAGS += -DBOARD_FEATHER52
 feather52: $(BUILD_DIRECTORIES) $(OBJECTS)
+	@echo Linking target: $(OUTPUT_FILENAME).out
+	$(NO_ECHO)$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -lm -o $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
+	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e finalize
+
+# Target for Metro nrf52 board
+metro52: OUTPUT_FILENAME := metro52_bootloader
+metro52: BOOTLOADER_WITH_S132_NAME := metro52_$(BOOTLOADER_S132_SUFFIX)
+metro52: CFLAGS += -DBOARD_METRO52
+metro52: $(BUILD_DIRECTORIES) $(OBJECTS)
 	@echo Linking target: $(OUTPUT_FILENAME).out
 	$(NO_ECHO)$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -lm -o $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
 	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e finalize
@@ -285,7 +303,7 @@ genhex:
 ## Create pkg file for bootloader only and bootloader+SD combo to use with DFU
 genpkg:
 	@echo Preparing: $(OUTPUT_FILENAME).zip $(BOOTLOADER_WITH_S132_NAME).zip
-	@$(NRFUTIL) dfu genpkg --dev-type 0x0052 --dev-revision 0xADAF --bootloader $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex ../../../../$(OUTPUT_FILENAME).zip
+	@$(NRFUTIL) dfu genpkg --dev-type 0x0052 --dev-revision 0xADAF --bootloader $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex ../../../../$(OUTPUT_FILENAME)_v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION).zip
 	@$(NRFUTIL) dfu genpkg --dev-type 0x0052 --dev-revision 0xADAF --bootloader $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex --softdevice $(SOFTDEVICE_HEX) ../../../../$(BOOTLOADER_WITH_S132_NAME).zip 
 echosize:
 	-@echo ''
@@ -294,9 +312,6 @@ echosize:
 
 clean:
 	@$(RM) $(BUILD_DIRECTORIES)
-
-cleanobj:
-	@$(RM) $(BUILD_DIRECTORIES)/*.o
 	
 flash: feather52
 	@echo Flashing: $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
