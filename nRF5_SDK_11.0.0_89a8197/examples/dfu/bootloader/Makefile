@@ -16,9 +16,12 @@ MAKEFILE_DIR := $(dir $(MAKEFILE_NAME) )
 TEMPLATE_PATH = $(SDK_PATH)/toolchain/gcc
 
 ifeq ($(OS),Windows_NT)
-include $(TEMPLATE_PATH)/Makefile.windows
+#PROGFILES := C:/Program Files
+PROGFILES := C:/Program Files (x86)
+
+GNU_INSTALL_ROOT := $(PROGFILES)/GNU Tools ARM Embedded/4.9 2015q1
 else
-include $(TEMPLATE_PATH)/Makefile.posix
+GNU_INSTALL_ROOT := /usr
 endif
 
 MK := mkdir
@@ -30,6 +33,8 @@ NO_ECHO :=
 else
 NO_ECHO := @
 endif
+
+GNU_PREFIX := arm-none-eabi
 
 # Toolchain commands
 CC              := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-gcc'
@@ -87,8 +92,6 @@ $(abspath $(SDK_PATH)/softdevice/common/softdevice_handler/softdevice_handler_ap
 ASM_SOURCE_FILES  = $(abspath $(SDK_PATH)/toolchain/gcc/gcc_startup_nrf52.s)
 
 #includes common to all targets
-#INC_PATHS  = -I$(abspath config/dfu_dual_bank_serial_s132_pca10040)
-#INC_PATHS += -I$(abspath config)
 INC_PATHS += -I$(abspath ./)
 INC_PATHS += -I$(abspath ../../bsp)
 INC_PATHS += -I$(abspath $(SDK_PATH)/libraries/bootloader_dfu/hci_transport)
@@ -158,16 +161,20 @@ CFLAGS += -mcpu=cortex-m4
 CFLAGS += -mthumb -mabi=aapcs --std=gnu99
 CFLAGS += -Wall -Werror -Os -g3
 CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
+
 # keep every function in separate section. This will allow linker to dump unused functions
 CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
 CFLAGS += -fno-builtin --short-enums 
+
 # keep every function in separate section. This will allow linker to dump unused functions
 LDFLAGS += -Xlinker -Map=$(LISTING_DIRECTORY)/$(OUTPUT_FILENAME).map
 LDFLAGS += -mthumb -mabi=aapcs -L $(TEMPLATE_PATH) -T$(LINKER_SCRIPT)
 LDFLAGS += -mcpu=cortex-m4
 LDFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
+
 # let linker to dump unused sections
 LDFLAGS += -Wl,--gc-sections
+
 # use newlib in nano version
 LDFLAGS += --specs=nano.specs -lc -lnosys
 
