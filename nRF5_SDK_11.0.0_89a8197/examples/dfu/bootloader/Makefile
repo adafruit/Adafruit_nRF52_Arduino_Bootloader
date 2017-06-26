@@ -9,19 +9,18 @@ VERSION_REVISION = 0
 BOOTLOADER_WITH_S132_NAME = bootloader_v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s132_v201
 
 export OUTPUT_FILENAME
-#MAKEFILE_NAME := $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 MAKEFILE_NAME := $(MAKEFILE_LIST)
 MAKEFILE_DIR := $(dir $(MAKEFILE_NAME) ) 
 
 TEMPLATE_PATH = $(SDK_PATH)/toolchain/gcc
 
 ifeq ($(OS),Windows_NT)
-#PROGFILES := C:/Program Files
-PROGFILES := C:/Program Files (x86)
+#PROGFILES = C:/Program Files
+PROGFILES = C:/Program Files (x86)
 
-GNU_INSTALL_ROOT := $(PROGFILES)/GNU Tools ARM Embedded/4.9 2015q1
+GNU_INSTALL_ROOT = $(PROGFILES)/GNU Tools ARM Embedded/4.9 2015q1
 else
-GNU_INSTALL_ROOT := /usr
+GNU_INSTALL_ROOT = /usr
 endif
 
 MK := mkdir
@@ -34,7 +33,7 @@ else
 NO_ECHO := @
 endif
 
-GNU_PREFIX := arm-none-eabi
+GNU_PREFIX = arm-none-eabi
 
 # Toolchain commands
 CC              := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-gcc'
