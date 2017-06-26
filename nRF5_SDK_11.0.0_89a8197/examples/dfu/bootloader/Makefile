@@ -1,9 +1,8 @@
-PROJECT_NAME := dfu_dual_bank_serial_s132_pca10040
-SDK_PATH = ../../../components
-SOFTDEVICE_HEX = $(SDK_PATH)/softdevice/s132/hex/s132_nrf52_2.0.1_softdevice.hex
+SDK_PATH         = ../../../components
+SOFTDEVICE_HEX   = $(SDK_PATH)/softdevice/s132/hex/s132_nrf52_2.0.1_softdevice.hex
 
-VERSION_MAJOR = 0
-VERSION_MINOR = 5
+VERSION_MAJOR    = 0
+VERSION_MINOR    = 5
 VERSION_REVISION = 0
 
 BOOTLOADER_WITH_S132_NAME = bootloader_v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s132_v201
@@ -14,10 +13,14 @@ MAKEFILE_DIR := $(dir $(MAKEFILE_NAME) )
 
 TEMPLATE_PATH = $(SDK_PATH)/toolchain/gcc
 
+#################
+## Tool configure
+#################
+NRFUTIL = nrfutil
+
 ifeq ($(OS),Windows_NT)
 #PROGFILES = C:/Program Files
 PROGFILES = C:/Program Files (x86)
-
 GNU_INSTALL_ROOT = $(PROGFILES)/GNU Tools ARM Embedded/4.9 2015q1
 else
 GNU_INSTALL_ROOT = /usr
@@ -26,7 +29,6 @@ endif
 MK := mkdir
 RM := rm -rf
 
-#echo suspend
 ifeq ("$(VERBOSE)","1")
 NO_ECHO := 
 else
@@ -36,16 +38,16 @@ endif
 GNU_PREFIX = arm-none-eabi
 
 # Toolchain commands
-CC              := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-gcc'
-AS              := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-as'
-AR              := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-ar' -r
-LD              := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-ld'
-NM              := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-nm'
-OBJDUMP         := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-objdump'
-OBJCOPY         := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-objcopy'
-SIZE            := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-size'
+CC      := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-gcc'
+AS      := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-as'
+AR      := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-ar' -r
+LD      := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-ld'
+NM      := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-nm'
+OBJDUMP := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-objdump'
+OBJCOPY := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-objcopy'
+SIZE    := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-size'
 
-NRFUTIL = nrfutil
+
 
 #function for removing duplicates in a list
 remduplicates = $(strip $(if $1,$(firstword $1) $(call remduplicates,$(filter-out $(firstword $1),$1))))
@@ -204,17 +206,17 @@ ASMFLAGS += -DNRF52_PAN_62
 ASMFLAGS += -DNRF52_PAN_63
 
 #default target - first one defined
-default: clean nrf52832_xxaa
+default: clean feather52
 
 #building all targets
 all: clean
 	@$(MAKE) -s -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e cleanobj
-	@$(MAKE) -s -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e nrf52832_xxaa
+	@$(MAKE) -s -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e feather52
 
 #target for printing all targets
 help:
 	@echo following targets are available:
-	@echo 	nrf52832_xxaa
+	@echo 	feather52
 
 C_SOURCE_FILE_NAMES = $(notdir $(C_SOURCE_FILES))
 C_PATHS = $(call remduplicates, $(dir $(C_SOURCE_FILES) ) )
@@ -229,10 +231,10 @@ vpath %.s $(ASM_PATHS)
 
 OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
 
-nrf52832_xxaa: OUTPUT_FILENAME := bootloader
-nrf52832_xxaa: LINKER_SCRIPT=dfu_gcc_nrf52.ld
+feather52: OUTPUT_FILENAME := bootloader
+feather52: LINKER_SCRIPT=dfu_gcc_nrf52.ld
 
-nrf52832_xxaa: $(BUILD_DIRECTORIES) $(OBJECTS)
+feather52: $(BUILD_DIRECTORIES) $(OBJECTS)
 	@echo Linking target: $(OUTPUT_FILENAME).out
 	$(NO_ECHO)$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -lm -o $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
 	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e finalize
@@ -296,8 +298,7 @@ clean:
 cleanobj:
 	@$(RM) $(BUILD_DIRECTORIES)/*.o
 	
-flash: nrf52832_xxaa
+flash: feather52
 	@echo Flashing: $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
 	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex -f nrf52 --chiperase --reset
 	#adalink nrf52832 -p jlink -w -h $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex	
-	#nrfjprog --snr 268003250 --program $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex -f nrf52 --chiperase --reset
