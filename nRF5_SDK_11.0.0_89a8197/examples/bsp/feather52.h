@@ -56,10 +56,13 @@
 /*------------------------------------------------------------------*/
 /* UART
  *------------------------------------------------------------------*/
-#define RX_PIN_NUMBER  8 // 12
-#define TX_PIN_NUMBER  6 // 11
+#define RX_PIN_NUMBER  8
+#define TX_PIN_NUMBER  6
 #define CTS_PIN_NUMBER 7
 #define RTS_PIN_NUMBER 5
 #define HWFC           false
+
+// Used as model string in OTA mode
+#define DIS_MODEL      "Bluefruit Feather 52"
 
 #endif // FEATHER52_H

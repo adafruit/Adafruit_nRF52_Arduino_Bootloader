@@ -119,6 +119,9 @@ static void timers_init(void)
 static void button_pin_init(uint32_t pin)
 {
   nrf_gpio_cfg_sense_input(pin, BUTTON_PULL, NRF_GPIO_PIN_SENSE_LOW);
+
+  // delay 100us for the pin state is stable
+  nrf_delay_us(100);
 }
 
 bool button_pressed(uint32_t pin)
@@ -131,9 +134,10 @@ static void led_pin_init(uint32_t pin)
 #ifdef BOARD_METRO52
   // LED BLUE is muxed with FRESET. We need to make sure it is
   // not wired to GND before configuring it as output
-  if (pin == LED_2)
+  if (pin == LED_BLUE)
   {
     button_pin_init(pin);
+
     // skip and configure as input if grounded instead of output !!!
     if ( button_pressed(pin) ) return;
   }

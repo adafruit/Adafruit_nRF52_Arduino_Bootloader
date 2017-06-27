@@ -59,10 +59,13 @@
 /*------------------------------------------------------------------*/
 /* UART
  *------------------------------------------------------------------*/
-#define RX_PIN_NUMBER  23 // 8 // 12
-#define TX_PIN_NUMBER  8  // 6 // 11
+#define RX_PIN_NUMBER  23
+#define TX_PIN_NUMBER  8
 #define CTS_PIN_NUMBER 0
 #define RTS_PIN_NUMBER 0
 #define HWFC           false
+
+// Used as model string in OTA mode
+#define DIS_MODEL      "Bluefruit Metro 52"
 
 #endif // METRO52_H
