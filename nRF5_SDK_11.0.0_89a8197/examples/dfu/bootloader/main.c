@@ -116,17 +116,15 @@ static void timers_init(void)
   APP_TIMER_APPSH_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, true);
 }
 
-static void leds_init(void)
+static void led_pin_init(uint32_t pin)
 {
-    nrf_gpio_cfg_output(LED_STATUS_PIN);
-#if LEDS_NUMBER > 1
-    nrf_gpio_cfg_output(LED_CONNECTION_PIN);
-#endif
+  nrf_gpio_cfg_output(pin);
+  led_off(pin);
+}
 
-    led_off(LED_STATUS_PIN);
-#if LEDS_NUMBER > 1
-    led_off(LED_CONNECTION_PIN);
-#endif
+static void button_pin_init(uint32_t pin)
+{
+  nrf_gpio_cfg_sense_input(pin, BUTTON_PULL, NRF_GPIO_PIN_SENSE_LOW);
 }
 
 /*
@@ -177,12 +175,6 @@ void blinky_ota_disconneted(void)
   isOTAConnected = false;
 }
 
-static void buttons_init(void)
-{
-    nrf_gpio_cfg_sense_input(BOOTLOADER_BUTTON, BUTTON_PULL, NRF_GPIO_PIN_SENSE_LOW);
-    nrf_gpio_cfg_sense_input(FRESET_BUTTON, BUTTON_PULL, NRF_GPIO_PIN_SENSE_LOW);
-}
-
 bool button_pressed(uint32_t pin)
 {
   return (nrf_gpio_pin_read(pin) == 0) ? true : false;
@@ -198,7 +190,7 @@ bool button_pressed(uint32_t pin)
  */
 static void sys_evt_dispatch(uint32_t event)
 {
-    pstorage_sys_event_handler(event);
+  pstorage_sys_event_handler(event);
 }
 
 
@@ -248,7 +240,8 @@ static void ble_stack_init(bool init_softdevice)
 }
 
 
-/**@brief Function for event scheduler initialization.
+/**
+ * @brief Function for event scheduler initialization.
  */
 static void scheduler_init(void)
 {
@@ -260,7 +253,8 @@ static void scheduler_init(void)
 }
 
 
-/**@brief Function for bootloader main entry.
+/**
+ * @brief Function for bootloader main entry.
  */
 int main(void)
 {
@@ -282,20 +276,26 @@ int main(void)
     NRF_POWER->GPREGRET = 0;
   }
 
-  leds_init();
-
   // This check ensures that the defined fields in the bootloader corresponds with actual
   // setting in the chip.
   APP_ERROR_CHECK_BOOL(*((uint32_t *)NRF_UICR_BOOT_START_ADDRESS) == BOOTLOADER_REGION_START);
   APP_ERROR_CHECK_BOOL(NRF_FICR->CODEPAGESIZE == CODE_PAGE_SIZE);
 
   // Initialize.
+  led_pin_init(LED_STATUS_PIN);
+
+#if LEDS_NUMBER > 1
+  led_pin_init(LED_CONNECTION_PIN);
+#endif
+
+  button_pin_init(BOOTLOADER_BUTTON);
+  button_pin_init(FRESET_BUTTON);
+
   timers_init();
-  buttons_init();
 
   BOOTLOADER_VERSION_REGISTER = BOOTLOADER_VERSION;
 
-  (void)bootloader_init();
+  (void) bootloader_init();
 
   if (bootloader_dfu_sd_in_progress())
   {
