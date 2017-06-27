@@ -49,15 +49,8 @@ static inline bool bit_test(uint32_t value, uint8_t n)
   return (value & bit(n)) ? true : false;
 }
 
-static inline void led_control(uint32_t pin, bool state)
-{
-#ifdef BOARD_METRO52
-  // Skip if LED_BLUE is configured as input (possibly wiring to GND)
-  if ( pin == LED_2 && !bit_test(NRF_GPIO->PIN_CNF[pin], GPIO_PIN_CNF_DIR_Pos) ) return;
-#endif
 
-  nrf_gpio_pin_write(pin, state ? LED_STATE_ON : (1-LED_STATE_ON));
-}
+void led_control(uint32_t pin, bool state);
 
 static inline void led_on(uint32_t pin)
 {

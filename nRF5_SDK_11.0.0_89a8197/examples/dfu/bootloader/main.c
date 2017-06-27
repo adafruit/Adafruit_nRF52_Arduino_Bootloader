@@ -119,9 +119,6 @@ static void timers_init(void)
 static void button_pin_init(uint32_t pin)
 {
   nrf_gpio_cfg_sense_input(pin, BUTTON_PULL, NRF_GPIO_PIN_SENSE_LOW);
-
-  // delay 100us for the pin state is stable
-  nrf_delay_us(100);
 }
 
 bool button_pressed(uint32_t pin)
@@ -133,11 +130,10 @@ static void led_pin_init(uint32_t pin)
 {
 #ifdef BOARD_METRO52
   // LED BLUE is muxed with FRESET. We need to make sure it is
-  // not wired to GND before configuring it as output
-  if (pin == LED_BLUE)
+  // not wired to GND before configuring it as output.
+  // Only check if it is not yet configured as OUTPUT
+  if (pin == LED_BLUE && !bit_test(NRF_GPIO->PIN_CNF[pin], GPIO_PIN_CNF_DIR_Pos))
   {
-    button_pin_init(pin);
-
     // skip and configure as input if grounded instead of output !!!
     if ( button_pressed(pin) ) return;
   }
@@ -145,6 +141,23 @@ static void led_pin_init(uint32_t pin)
 
   nrf_gpio_cfg_output(pin);
   led_off(pin);
+}
+
+void led_control(uint32_t pin, bool state)
+{
+#ifdef BOARD_METRO52
+  // Skip if LED_BLUE is configured as input and wiring to GND
+  // Otherwise configure it as output (it may just transition from hardware GND to open)
+  if ( pin == LED_2 && !bit_test(NRF_GPIO->PIN_CNF[pin], GPIO_PIN_CNF_DIR_Pos) )
+  {
+    if ( button_pressed(pin) ) return;
+
+    // configure as output
+    nrf_gpio_cfg_output(pin);
+  }
+#endif
+
+  nrf_gpio_pin_write(pin, state ? LED_STATE_ON : (1-LED_STATE_ON));
 }
 
 
@@ -171,7 +184,10 @@ static void blinky_handler(void * p_context)
   led_control(LED_RED, state);
 
   // Blink LED BLUE if OTA mode and not connected
-  if (is_ota() && !isOTAConnected) led_control(LED_BLUE, state);
+  if (is_ota() && !isOTAConnected)
+  {
+    led_control(LED_BLUE, state);
+  }
 
   // Feed all Watchdog just in case application enable it (WDT last through a soft reboot to bootloader)
   if ( nrf_wdt_started() )
@@ -304,6 +320,7 @@ int main(void)
    */
   button_pin_init(BOOTLOADER_BUTTON);
   button_pin_init(FRESET_BUTTON);
+  nrf_delay_us(100); // wait for the pin state is stable
 
   led_pin_init(LED_RED);
   led_pin_init(LED_BLUE); // on metro52 will override FRESET
@@ -334,6 +351,7 @@ int main(void)
    * as needed and reconfigure as LED BLUE when done. */
 #ifdef BOARD_METRO52
   button_pin_init(FRESET_BUTTON);
+  nrf_delay_us(100); // wait for the pin state is stable
 #endif
 
   // DFU button pressed
@@ -364,6 +382,7 @@ int main(void)
   // Adafruit Factory reset
 #ifdef BOARD_METRO52
   button_pin_init(FRESET_BUTTON);
+  nrf_delay_us(100); // wait for the pin state is stable
 #endif
 
   bool is_freset = ( !button_pressed(BOOTLOADER_BUTTON) && button_pressed(FRESET_BUTTON) );
