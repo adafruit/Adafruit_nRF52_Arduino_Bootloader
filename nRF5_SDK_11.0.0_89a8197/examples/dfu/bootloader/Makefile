@@ -337,9 +337,9 @@ genhex:
 
 ## Create pkg file for bootloader only and bootloader+SD combo to use with DFU
 genpkg:
-	@echo Preparing: $(OUTPUT_FILENAME).zip $(BOOTLOADER_WITH_S132_NAME).zip
-	@$(NRFUTIL) dfu genpkg --dev-type 0x0052 --dev-revision 0xADAF --bootloader $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex ../../../../$(OUTPUT_FILENAME)_v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION).zip
+	@echo Preparing: $(BOOTLOADER_WITH_S132_NAME).zip
 	@$(NRFUTIL) dfu genpkg --dev-type 0x0052 --dev-revision 0xADAF --bootloader $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex --softdevice $(SOFTDEVICE_HEX) ../../../../$(BOOTLOADER_WITH_S132_NAME).zip 
+
 echosize:
 	-@echo ''
 	$(NO_ECHO)$(SIZE) $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
