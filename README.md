@@ -1,6 +1,6 @@
 # Adafruit nRF52 Arduino Bootloader
 
-This repository contains the bootloader for the Adafruit nRF52 Feather boards.
+This repository contains the bootloader for Adafruit nRF52 boards.
 
 It is based on nRF52 SDK 11.0.0 using the classic serial and OTA update options, and adds the following additional features:
 
