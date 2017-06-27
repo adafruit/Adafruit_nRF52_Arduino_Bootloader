@@ -40,26 +40,25 @@
 // Note: FRST and LED2 are on the same pin, so can't be used together
 //       LED2 will be disabled since it is less critical
 
+/*------------------------------------------------------------------*/
+/* LED
+ *------------------------------------------------------------------*/
 #define LEDS_NUMBER    1
 #define LED_1          29
 //#define LED_2          22
 #define LED_STATE_ON   1
 
-#define BSP_LED_0      LED_1
-//#define BSP_LED_1      LED_2
-
+/*------------------------------------------------------------------*/
+/* BUTTON
+ *------------------------------------------------------------------*/
 #define BUTTONS_NUMBER 2
 #define BUTTON_1       18
 #define BUTTON_2       22
 #define BUTTON_PULL    NRF_GPIO_PIN_PULLUP
-#define BSP_BUTTON_0   BUTTON_1
 
-
-#define BSP_BUTTON_0_MASK (1<<BSP_BUTTON_0)
-#define BSP_BUTTON_1_MASK (1<<BSP_BUTTON_1)
-#define BSP_BUTTON_2_MASK (1<<BSP_BUTTON_2)
-#define BSP_BUTTON_3_MASK (1<<BSP_BUTTON_3)
-
+/*------------------------------------------------------------------*/
+/* UART
+ *------------------------------------------------------------------*/
 #define RX_PIN_NUMBER  23 // 8 // 12
 #define TX_PIN_NUMBER  8  // 6 // 11
 #define CTS_PIN_NUMBER 0

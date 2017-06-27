@@ -27,12 +27,14 @@
  * -# Activate Image, boot application.
  *
  */
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stddef.h>
+
 #include "dfu_transport.h"
 #include "bootloader.h"
 #include "bootloader_util.h"
-#include <stdint.h>
-#include <string.h>
-#include <stddef.h>
 #include "nordic_common.h"
 #include "nrf.h"
 #include "nrf_soc.h"
@@ -70,23 +72,21 @@
  *
  * Note: for BOOTLOADER_DFU_OTA_MAGIC Softdevice should not initialized. In other case SD must be initialized
  */
-#define BOOTLOADER_DFU_OTA_MAGIC            BOOTLOADER_DFU_START // 0xB1
+#define BOOTLOADER_DFU_OTA_MAGIC            BOOTLOADER_DFU_START             // 0xB1
 #define BOOTLOADER_DFU_OTA_FULLRESET_MAGIC  0xA8
 #define BOOTLOADER_DFU_SERIAL_MAGIC         0x4e
-//#define
 
-#define BOOTLOADER_BUTTON               BUTTON_1                  /**< Button used to enter SW update mode. */
-#define FRESET_BUTTON                   BUTTON_2                  // Button used in addition to DFU button, to force OTA DFU
+#define BOOTLOADER_BUTTON                   BUTTON_1                         // Button used to enter SW update mode.
+#define FRESET_BUTTON                       BUTTON_2                         // Button used in addition to DFU button, to force OTA DFU
 
-#define APP_TIMER_PRESCALER             0                                                       /**< Value of the RTC1 PRESCALER register. */
-#define APP_TIMER_OP_QUEUE_SIZE         4                                                       /**< Size of timer operation queues. */
+#define APP_TIMER_PRESCALER                 0                                /**< Value of the RTC1 PRESCALER register. */
+#define APP_TIMER_OP_QUEUE_SIZE             4                                /**< Size of timer operation queues. */
 
-#define SCHED_MAX_EVENT_DATA_SIZE       MAX(APP_TIMER_SCHED_EVT_SIZE, 0)                        /**< Maximum size of scheduler events. */
-
-#define SCHED_QUEUE_SIZE                20                                                      /**< Maximum number of events in the scheduler queue. */
+#define SCHED_MAX_EVENT_DATA_SIZE           MAX(APP_TIMER_SCHED_EVT_SIZE, 0) /**< Maximum size of scheduler events. */
+#define SCHED_QUEUE_SIZE                    20                               /**< Maximum number of events in the scheduler queue. */
 
 // Adafruit for factory reset
-#define APPDATA_ADDR_START              (BOOTLOADER_REGION_START-DFU_APP_DATA_RESERVED)
+#define APPDATA_ADDR_START                  (BOOTLOADER_REGION_START-DFU_APP_DATA_RESERVED)
 STATIC_ASSERT( APPDATA_ADDR_START == 0x6D000);
 
 void adafruit_factory_reset(void);
@@ -101,15 +101,19 @@ APP_TIMER_DEF( blinky_timer_id );
 // true if ble, false if serial
 bool _ota_update = false;
 
-bool is_ota(void)
-{
-  return _ota_update;
-}
-
+bool is_ota(void) { return _ota_update; }
 
 void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 {
     app_error_handler(0xDEADBEEF, line_num, p_file_name);
+}
+
+/**@brief Function for initializing the timer handler module (app_timer).
+ */
+static void timers_init(void)
+{
+  // Initialize timer module, making it use the scheduler.
+  APP_TIMER_APPSH_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, true);
 }
 
 static void leds_init(void)
@@ -156,14 +160,6 @@ static void blinky_handler(void * p_context)
   {
     for (uint8_t i=0; i<8; i++) nrf_wdt_reload_request_set(i);
   }
-}
-
-/**@brief Function for initializing the timer handler module (app_timer).
- */
-static void timers_init(void)
-{
-    // Initialize timer module, making it use the scheduler.
-    APP_TIMER_APPSH_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, true);
 }
 
 void blinky_fast_set(bool isFast)
@@ -216,39 +212,39 @@ static void sys_evt_dispatch(uint32_t event)
  */
 static void ble_stack_init(bool init_softdevice)
 {
-    uint32_t         err_code;
-    sd_mbr_command_t com = {SD_MBR_COMMAND_INIT_SD, };
-    nrf_clock_lf_cfg_t clock_lf_cfg =
-    {
-        .source        = NRF_CLOCK_LF_SRC_RC,
-        .rc_ctiv       = 16,
-        .rc_temp_ctiv  = 2,
-        .xtal_accuracy = NRF_CLOCK_LF_XTAL_ACCURACY_20_PPM
-    };
+  uint32_t         err_code;
+  sd_mbr_command_t com = {SD_MBR_COMMAND_INIT_SD, };
+  nrf_clock_lf_cfg_t clock_lf_cfg =
+  {
+      .source        = NRF_CLOCK_LF_SRC_RC,
+      .rc_ctiv       = 16,
+      .rc_temp_ctiv  = 2,
+      .xtal_accuracy = NRF_CLOCK_LF_XTAL_ACCURACY_20_PPM
+  };
 
-    if (init_softdevice)
-    {
-        err_code = sd_mbr_command(&com);
-        APP_ERROR_CHECK(err_code);
-    }
-
-    err_code = sd_softdevice_vector_table_base_set(BOOTLOADER_REGION_START);
+  if (init_softdevice)
+  {
+    err_code = sd_mbr_command(&com);
     APP_ERROR_CHECK(err_code);
+  }
 
-    SOFTDEVICE_HANDLER_APPSH_INIT(&clock_lf_cfg, true);
+  err_code = sd_softdevice_vector_table_base_set(BOOTLOADER_REGION_START);
+  APP_ERROR_CHECK(err_code);
 
-    // Enable BLE stack.
-    ble_enable_params_t ble_enable_params;
-    // Only one connection as a central is used when performing dfu.
-    err_code = softdevice_enable_get_default_config(1, 1, &ble_enable_params);
-    APP_ERROR_CHECK(err_code);
+  SOFTDEVICE_HANDLER_APPSH_INIT(&clock_lf_cfg, true);
 
-    ble_enable_params.gatts_enable_params.service_changed = IS_SRVC_CHANGED_CHARACT_PRESENT;
-    err_code = softdevice_enable(&ble_enable_params);
-    APP_ERROR_CHECK(err_code);
+  // Enable BLE stack.
+  ble_enable_params_t ble_enable_params;
+  // Only one connection as a central is used when performing dfu.
+  err_code = softdevice_enable_get_default_config(1, 1, &ble_enable_params);
+  APP_ERROR_CHECK(err_code);
 
-    err_code = softdevice_sys_evt_handler_set(sys_evt_dispatch);
-    APP_ERROR_CHECK(err_code);
+  ble_enable_params.gatts_enable_params.service_changed = IS_SRVC_CHANGED_CHARACT_PRESENT;
+  err_code = softdevice_enable(&ble_enable_params);
+  APP_ERROR_CHECK(err_code);
+
+  err_code = softdevice_sys_evt_handler_set(sys_evt_dispatch);
+  APP_ERROR_CHECK(err_code);
 }
 
 
@@ -256,11 +252,11 @@ static void ble_stack_init(bool init_softdevice)
  */
 static void scheduler_init(void)
 {
-    APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
+  APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
 
-    /* Initialize a blinky timer to show that we're in bootloader */
-    (void) app_timer_create(&blinky_timer_id, APP_TIMER_MODE_REPEATED, blinky_handler);
-    app_timer_start(blinky_timer_id, APP_TIMER_TICKS(LED_BLINK_INTERVAL, APP_TIMER_PRESCALER), NULL);
+  /* Initialize a blinky timer to show that we're in bootloader */
+  (void) app_timer_create(&blinky_timer_id, APP_TIMER_MODE_REPEATED, blinky_handler);
+  app_timer_start(blinky_timer_id, APP_TIMER_TICKS(LED_BLINK_INTERVAL, APP_TIMER_PRESCALER), NULL);
 }
 
 

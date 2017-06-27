@@ -20,8 +20,6 @@
 #include "metro52.h"
 #endif
 
-
-
 // Make sure we have at least two buttons (DFU + FRESET since DFU+FRST=OTA)
 #if BUTTONS_NUMBER < 2
 #error "At least two buttons required in the BSP (see 'BUTTONS_NUMBER')"

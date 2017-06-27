@@ -37,26 +37,25 @@
 #ifndef FEATHER52_H
 #define FEATHER52_H
 
+/*------------------------------------------------------------------*/
+/* LED
+ *------------------------------------------------------------------*/
 #define LEDS_NUMBER    2
 #define LED_1          17
 #define LED_2          19
 #define LED_STATE_ON   1
 
-#define BSP_LED_0      LED_1
-#define BSP_LED_1      LED_2
-
+/*------------------------------------------------------------------*/
+/* BUTTON
+ *------------------------------------------------------------------*/
 #define BUTTONS_NUMBER 2
 #define BUTTON_1       20
 #define BUTTON_2       22
 #define BUTTON_PULL    NRF_GPIO_PIN_PULLUP
-#define BSP_BUTTON_0   BUTTON_1
 
-
-#define BSP_BUTTON_0_MASK (1<<BSP_BUTTON_0)
-#define BSP_BUTTON_1_MASK (1<<BSP_BUTTON_1)
-#define BSP_BUTTON_2_MASK (1<<BSP_BUTTON_2)
-#define BSP_BUTTON_3_MASK (1<<BSP_BUTTON_3)
-
+/*------------------------------------------------------------------*/
+/* UART
+ *------------------------------------------------------------------*/
 #define RX_PIN_NUMBER  8 // 12
 #define TX_PIN_NUMBER  6 // 11
 #define CTS_PIN_NUMBER 7
