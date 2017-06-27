@@ -781,7 +781,7 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
     {
         case BLE_GAP_EVT_CONNECTED:
             blinky_ota_connected();
-            led_on(LED_CONNECTION_PIN);
+            led_on(LED_BLUE);
 //            led_off(ADVERTISING_LED_PIN_NO);
 
             m_conn_handle    = p_ble_evt->evt.gap_evt.conn_handle;
@@ -797,7 +797,7 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
                 blinky_ota_disconneted();
                 blinky_fast_set(false);
 
-                led_off(LED_CONNECTION_PIN);
+                led_off(LED_BLUE);
 
                 err_code = sd_ble_gatts_sys_attr_get(m_conn_handle, 
                                                      sys_attr,

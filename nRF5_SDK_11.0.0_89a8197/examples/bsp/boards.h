@@ -29,8 +29,8 @@
 #error "At least two buttons required in the BSP (see 'BUTTONS_NUMBER')"
 #endif
 
-#define LED_STATUS_PIN        LED_1
-#define LED_CONNECTION_PIN    LED_2
+#define LED_RED     LED_1
+#define LED_BLUE    LED_2
 
 #define bit(b) (1UL << (b))
 

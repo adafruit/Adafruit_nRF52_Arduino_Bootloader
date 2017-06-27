@@ -164,10 +164,10 @@ static void blinky_handler(void * p_context)
 
   state = 1-state;
 
-  led_control(LED_STATUS_PIN, state);
+  led_control(LED_RED, state);
 
   // Blink LED BLUE if OTA mode and not connected
-  if (is_ota() && !isOTAConnected) led_control(LED_CONNECTION_PIN, state);
+  if (is_ota() && !isOTAConnected) led_control(LED_BLUE, state);
 
   // Feed all Watchdog just in case application enable it (WDT last through a soft reboot to bootloader)
   if ( nrf_wdt_started() )
@@ -301,8 +301,8 @@ int main(void)
   button_pin_init(BOOTLOADER_BUTTON);
   button_pin_init(FRESET_BUTTON);
 
-  led_pin_init(LED_STATUS_PIN);
-  led_pin_init(LED_CONNECTION_PIN); // on metro52 will override FRESET
+  led_pin_init(LED_RED);
+  led_pin_init(LED_BLUE); // on metro52 will override FRESET
 
   timers_init();
 
@@ -339,7 +339,7 @@ int main(void)
   _ota_update = _ota_update  || ( button_pressed(BOOTLOADER_BUTTON) && button_pressed(FRESET_BUTTON) ) ;
 
 #ifdef BOARD_METRO52
-  led_pin_init(LED_CONNECTION_PIN);
+  led_pin_init(LED_BLUE);
 #endif
 
   if (dfu_start || (!bootloader_app_is_valid(DFU_BANK_0_REGION_START)))
@@ -365,7 +365,7 @@ int main(void)
   bool is_freset = ( !button_pressed(BOOTLOADER_BUTTON) && button_pressed(FRESET_BUTTON) );
 
 #ifdef BOARD_METRO52
-  led_pin_init(LED_CONNECTION_PIN);
+  led_pin_init(LED_BLUE);
 #endif
 
   if (is_freset)
@@ -431,7 +431,7 @@ void adafruit_factory_reset(void)
 {
   // Blink fast RED and turn on BLUE when erasing
   blinky_fast_set(true);
-  led_on(LED_CONNECTION_PIN);
+  led_on(LED_BLUE);
 
   static pstorage_handle_t freset_handle = { .block_id = APPDATA_ADDR_START } ;
   pstorage_module_param_t  storage_params = { .cb = appdata_pstorage_cb};
@@ -446,5 +446,5 @@ void adafruit_factory_reset(void)
 
   // back to normal
   blinky_fast_set(false);
-  led_off(LED_CONNECTION_PIN);
+  led_off(LED_BLUE);
 }
