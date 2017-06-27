@@ -116,16 +116,33 @@ static void timers_init(void)
   APP_TIMER_APPSH_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, true);
 }
 
-static void led_pin_init(uint32_t pin)
-{
-  nrf_gpio_cfg_output(pin);
-  led_off(pin);
-}
-
 static void button_pin_init(uint32_t pin)
 {
   nrf_gpio_cfg_sense_input(pin, BUTTON_PULL, NRF_GPIO_PIN_SENSE_LOW);
 }
+
+bool button_pressed(uint32_t pin)
+{
+  return (nrf_gpio_pin_read(pin) == 0) ? true : false;
+}
+
+static void led_pin_init(uint32_t pin)
+{
+#ifdef BOARD_METRO52
+  // LED BLUE is muxed with FRESET. We need to make sure it is
+  // not wired to GND before configuring it as output
+  if (pin == LED_2)
+  {
+    button_pin_init(pin);
+    // skip and configure as input if grounded instead of output !!!
+    if ( button_pressed(pin) ) return;
+  }
+#endif
+
+  nrf_gpio_cfg_output(pin);
+  led_off(pin);
+}
+
 
 /*
  * Blinking function, there are a few patterns
@@ -147,11 +164,10 @@ static void blinky_handler(void * p_context)
 
   state = 1-state;
 
-  nrf_gpio_pin_write(LED_STATUS_PIN, state);
+  led_control(LED_STATUS_PIN, state);
 
-#if LEDS_NUMBER > 1
-  if (is_ota() && !isOTAConnected) nrf_gpio_pin_write(LED_CONNECTION_PIN, state);
-#endif
+  // Blink LED BLUE if OTA mode and not connected
+  if (is_ota() && !isOTAConnected) led_control(LED_CONNECTION_PIN, state);
 
   // Feed all Watchdog just in case application enable it (WDT last through a soft reboot to bootloader)
   if ( nrf_wdt_started() )
@@ -173,11 +189,6 @@ void blinky_ota_connected(void)
 void blinky_ota_disconneted(void)
 {
   isOTAConnected = false;
-}
-
-bool button_pressed(uint32_t pin)
-{
-  return (nrf_gpio_pin_read(pin) == 0) ? true : false;
 }
 
 
@@ -276,24 +287,24 @@ int main(void)
     NRF_POWER->GPREGRET = 0;
   }
 
+  // Save bootloader version to pre-defined register, retrieved by application
+  BOOTLOADER_VERSION_REGISTER = BOOTLOADER_VERSION;
+
   // This check ensures that the defined fields in the bootloader corresponds with actual
   // setting in the chip.
   APP_ERROR_CHECK_BOOL(*((uint32_t *)NRF_UICR_BOOT_START_ADDRESS) == BOOTLOADER_REGION_START);
   APP_ERROR_CHECK_BOOL(NRF_FICR->CODEPAGESIZE == CODE_PAGE_SIZE);
 
-  // Initialize.
-  led_pin_init(LED_STATUS_PIN);
-
-#if LEDS_NUMBER > 1
-  led_pin_init(LED_CONNECTION_PIN);
-#endif
-
+  /* Initialize GPIOs
+   * For metro52 LED_BLUE is muxed with FRESET
+   */
   button_pin_init(BOOTLOADER_BUTTON);
   button_pin_init(FRESET_BUTTON);
 
-  timers_init();
+  led_pin_init(LED_STATUS_PIN);
+  led_pin_init(LED_CONNECTION_PIN); // on metro52 will override FRESET
 
-  BOOTLOADER_VERSION_REGISTER = BOOTLOADER_VERSION;
+  timers_init();
 
   (void) bootloader_init();
 
@@ -315,11 +326,21 @@ int main(void)
     scheduler_init();
   }
 
+  /* For metro52 LED_BLUE is muxed with FRESET. We only init FRESET BUTTON
+   * as needed and reconfigure as LED BLUE when done. */
+#ifdef BOARD_METRO52
+  button_pin_init(FRESET_BUTTON);
+#endif
+
   // DFU button pressed
   dfu_start  = dfu_start || button_pressed(BOOTLOADER_BUTTON);
 
   // DFU + FRESET are pressed --> OTA
   _ota_update = _ota_update  || ( button_pressed(BOOTLOADER_BUTTON) && button_pressed(FRESET_BUTTON) ) ;
+
+#ifdef BOARD_METRO52
+  led_pin_init(LED_CONNECTION_PIN);
+#endif
 
   if (dfu_start || (!bootloader_app_is_valid(DFU_BANK_0_REGION_START)))
   {
@@ -337,7 +358,17 @@ int main(void)
   }
 
   // Adafruit Factory reset
-  if ( !button_pressed(BOOTLOADER_BUTTON) && button_pressed(FRESET_BUTTON) )
+#ifdef BOARD_METRO52
+  button_pin_init(FRESET_BUTTON);
+#endif
+
+  bool is_freset = ( !button_pressed(BOOTLOADER_BUTTON) && button_pressed(FRESET_BUTTON) );
+
+#ifdef BOARD_METRO52
+  led_pin_init(LED_CONNECTION_PIN);
+#endif
+
+  if (is_freset)
   {
     adafruit_factory_reset();
   }
@@ -400,9 +431,7 @@ void adafruit_factory_reset(void)
 {
   // Blink fast RED and turn on BLUE when erasing
   blinky_fast_set(true);
-#if LEDS_NUMBER > 1
   led_on(LED_CONNECTION_PIN);
-#endif
 
   static pstorage_handle_t freset_handle = { .block_id = APPDATA_ADDR_START } ;
   pstorage_module_param_t  storage_params = { .cb = appdata_pstorage_cb};
@@ -417,7 +446,5 @@ void adafruit_factory_reset(void)
 
   // back to normal
   blinky_fast_set(false);
-#if LEDS_NUMBER > 1
   led_off(LED_CONNECTION_PIN);
-#endif
 }

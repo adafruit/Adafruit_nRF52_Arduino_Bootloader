@@ -781,9 +781,7 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
     {
         case BLE_GAP_EVT_CONNECTED:
             blinky_ota_connected();
-#if LEDS_NUMBER > 1
             led_on(LED_CONNECTION_PIN);
-#endif
 //            led_off(ADVERTISING_LED_PIN_NO);
 
             m_conn_handle    = p_ble_evt->evt.gap_evt.conn_handle;
@@ -798,9 +796,8 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
                 m_direct_adv_cnt = APP_DIRECTED_ADV_TIMEOUT;
                 blinky_ota_disconneted();
                 blinky_fast_set(false);
-#if LEDS_NUMBER > 1
+
                 led_off(LED_CONNECTION_PIN);
-#endif
 
                 err_code = sd_ble_gatts_sys_attr_get(m_conn_handle, 
                                                      sys_attr,

@@ -30,9 +30,7 @@
 #endif
 
 #define LED_STATUS_PIN        LED_1
-#if LEDS_NUMBER > 1
 #define LED_CONNECTION_PIN    LED_2
-#endif
 
 #define bit(b) (1UL << (b))
 
@@ -66,7 +64,7 @@ static inline void led_on(uint32_t pin)
   led_control(pin, true);
 }
 
-static inline void led_off(pin)
+static inline void led_off(uint32_t pin)
 {
   led_control(pin, false);
 }
