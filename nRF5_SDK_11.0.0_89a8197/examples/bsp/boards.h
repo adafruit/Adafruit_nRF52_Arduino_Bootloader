@@ -13,7 +13,14 @@
 #define BOARDS_H
 
 #include "nrf_gpio.h"
+
+#if defined BOARD_FEATHER52
+#include "feather52.h"
+#elif defined BOARD_METRO52
 #include "metro52.h"
+#endif
+
+
 
 // Make sure we have at least two buttons (DFU + FRESET since DFU+FRST=OTA)
 #if BUTTONS_NUMBER < 2

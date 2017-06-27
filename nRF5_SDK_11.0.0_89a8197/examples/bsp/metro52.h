@@ -60,19 +60,10 @@
 #define BSP_BUTTON_2_MASK (1<<BSP_BUTTON_2)
 #define BSP_BUTTON_3_MASK (1<<BSP_BUTTON_3)
 
-#define BUTTONS_MASK   0x001E0000
-
 #define RX_PIN_NUMBER  23 // 8 // 12
 #define TX_PIN_NUMBER  8  // 6 // 11
 #define CTS_PIN_NUMBER 0
 #define RTS_PIN_NUMBER 0
 #define HWFC           false
-
-// Low frequency clock source to be used by the SoftDevice
-// Adafruit overwrite by one in main.c
-#define NRF_CLOCK_LFCLKSRC      {.source        = NRF_CLOCK_LF_SRC_XTAL,            \
-                                 .rc_ctiv       = 0,                                \
-                                 .rc_temp_ctiv  = 0,                                \
-                                 .xtal_accuracy = NRF_CLOCK_LF_XTAL_ACCURACY_20_PPM}
 
 #endif // METRO52_H

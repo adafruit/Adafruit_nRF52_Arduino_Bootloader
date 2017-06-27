@@ -1,3 +1,8 @@
+#******************************************************************************
+# CONFIGURE (no spaces!)
+# - SDK_PATH        : path to SDK directory
+# - SOFTDEVICE_HEX  : path to bootloader hex binary
+#******************************************************************************
 SDK_PATH         = ../../../components
 SOFTDEVICE_HEX   = $(SDK_PATH)/softdevice/s132/hex/s132_nrf52_2.0.1_softdevice.hex
 
@@ -5,10 +10,8 @@ VERSION_MAJOR    = 0
 VERSION_MINOR    = 5
 VERSION_REVISION = 0
 
-BOOTLOADER_S132_SUFFIX = bootloader_v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s132_v201
+BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s132_v201
 
-MAKEFILE_NAME := $(MAKEFILE_LIST)
-MAKEFILE_DIR := $(dir $(MAKEFILE_NAME) ) 
 
 TEMPLATE_PATH = $(SDK_PATH)/toolchain/gcc
 
@@ -51,6 +54,10 @@ SIZE    := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-size'
 #function for removing duplicates in a list
 remduplicates = $(strip $(if $1,$(firstword $1) $(call remduplicates,$(filter-out $(firstword $1),$1))))
 
+
+#******************************************************************************
+# SOURCE FILES
+#******************************************************************************
 #source common to all targets
 C_SOURCE_FILES += \
 $(abspath main.c) \
@@ -88,10 +95,15 @@ $(abspath $(SDK_PATH)/softdevice/common/softdevice_handler/softdevice_handler.c)
 $(abspath $(SDK_PATH)/softdevice/common/softdevice_handler/softdevice_handler_appsh.c) \
 
 
-#assembly files common to all targets
+
+#******************************************************************************
+# Assembly Files
+#******************************************************************************
 ASM_SOURCE_FILES  = $(abspath $(SDK_PATH)/toolchain/gcc/gcc_startup_nrf52.s)
 
-#includes common to all targets
+#******************************************************************************
+# INCLUDE PATH
+#******************************************************************************
 INC_PATHS += -I$(abspath ./)
 INC_PATHS += -I$(abspath ../../bsp)
 INC_PATHS += -I$(abspath $(SDK_PATH)/libraries/bootloader_dfu/hci_transport)
@@ -127,9 +139,17 @@ OUTPUT_BINARY_DIRECTORY = $(OBJECT_DIRECTORY)
 # Sorting removes duplicates
 BUILD_DIRECTORIES := $(sort $(OBJECT_DIRECTORY) $(OUTPUT_BINARY_DIRECTORY) $(LISTING_DIRECTORY) )
 
+#******************************************************************************
+# Compiler Flags
+# - Additional compiler flags
+#******************************************************************************
+
 #flags common to all targets
 #CFLAGS += -DENABLE_SWO
 
+#*************************
+# Defined Symbol (MACROS)
+#*************************
 CFLAGS += -DBOOTLOADER_VERSION=0x0$(VERSION_MAJOR)0$(VERSION_MINOR)0$(VERSION_REVISION)
 CFLAGS += -DNRF52
 CFLAGS += -DNRF52_PAN_12
@@ -165,6 +185,11 @@ CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
 CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
 CFLAGS += -fno-builtin --short-enums 
 
+#******************************************************************************
+# Linker Flags
+#
+#******************************************************************************
+
 # keep every function in separate section. This will allow linker to dump unused functions
 LDFLAGS += -Xlinker -Map=$(LISTING_DIRECTORY)/$(OUTPUT_FILENAME).map
 LDFLAGS += -mthumb -mabi=aapcs -L $(TEMPLATE_PATH) -T$(LINKER_SCRIPT)
@@ -177,7 +202,10 @@ LDFLAGS += -Wl,--gc-sections
 # use newlib in nano version
 LDFLAGS += --specs=nano.specs -lc -lnosys
 
+#******************************************************************************
 # Assembler flags
+#
+#******************************************************************************
 ASMFLAGS += -x assembler-with-cpp
 ASMFLAGS += -DNRF52
 ASMFLAGS += -DNRF52_PAN_12
@@ -202,6 +230,13 @@ ASMFLAGS += -DSOFTDEVICE_PRESENT
 ASMFLAGS += -DNRF52_PAN_62
 ASMFLAGS += -DNRF52_PAN_63
 
+MAKEFILE_NAME := $(MAKEFILE_LIST)
+MAKEFILE_DIR := $(dir $(MAKEFILE_NAME) ) 
+
+#******************************************************************************
+# BUILD TARGETS
+#******************************************************************************
+
 #default target - first one defined
 default: all
 
@@ -219,8 +254,10 @@ all:
 #target for printing all targets
 help:
 	@echo following targets are available:
-	@echo - feather52
-	@echo - metro52
+	@echo - feather52       : build for Feather nrf52 board
+	@echo - metro52         : build for Metro nrf52 board
+	@echo - flash_feather52 : flash Feather nrf52 board
+	@echo - flash_metro52   : flash Metro nrf52 board
 
 C_SOURCE_FILE_NAMES = $(notdir $(C_SOURCE_FILES))
 C_PATHS = $(call remduplicates, $(dir $(C_SOURCE_FILES) ) )
@@ -237,11 +274,10 @@ OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
 LINKER_SCRIPT = dfu_gcc_nrf52.ld
 
 export OUTPUT_FILENAME
-export BOOTLOADER_WITH_S132_NAME
+BOOTLOADER_WITH_S132_NAME := $(OUTPUT_FILENAME)_$(BOOTLOADER_S132_SUFFIX)
 
 # Target for Feather nrf52 board
 feather52: OUTPUT_FILENAME := feather52_bootloader
-feather52: BOOTLOADER_WITH_S132_NAME := feather52_$(BOOTLOADER_S132_SUFFIX)
 feather52: CFLAGS += -DBOARD_FEATHER52
 feather52: $(BUILD_DIRECTORIES) $(OBJECTS)
 	@echo Linking target: $(OUTPUT_FILENAME).out
@@ -250,7 +286,6 @@ feather52: $(BUILD_DIRECTORIES) $(OBJECTS)
 
 # Target for Metro nrf52 board
 metro52: OUTPUT_FILENAME := metro52_bootloader
-metro52: BOOTLOADER_WITH_S132_NAME := metro52_$(BOOTLOADER_S132_SUFFIX)
 metro52: CFLAGS += -DBOARD_METRO52
 metro52: $(BUILD_DIRECTORIES) $(OBJECTS)
 	@echo Linking target: $(OUTPUT_FILENAME).out
@@ -312,8 +347,13 @@ echosize:
 
 clean:
 	@$(RM) $(BUILD_DIRECTORIES)
-	
-flash: feather52
+
+flash_feather52: BOOTLOADER_WITH_S132_NAME := feather52_bootloader_$(BOOTLOADER_S132_SUFFIX)
+flash_feather52: feather52
 	@echo Flashing: $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
 	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex -f nrf52 --chiperase --reset
-	#adalink nrf52832 -p jlink -w -h $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex	
+
+flash_metro52: BOOTLOADER_WITH_S132_NAME := metro52_bootloader_$(BOOTLOADER_S132_SUFFIX)
+flash_metro52: metro52
+	@echo Flashing: $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
+	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex -f nrf52 --chiperase --reset	
