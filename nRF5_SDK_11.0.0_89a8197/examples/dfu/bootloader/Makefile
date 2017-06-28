@@ -15,9 +15,9 @@ BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s1
 
 TEMPLATE_PATH = $(SDK_PATH)/toolchain/gcc
 
-#################
-## Tool configure
-#################
+#******************************************************************************
+# Tool configure
+#******************************************************************************
 NRFUTIL = nrfutil
 
 ifeq ($(OS),Windows_NT)
