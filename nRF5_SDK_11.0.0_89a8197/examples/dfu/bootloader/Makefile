@@ -12,7 +12,7 @@ VERSION_REVISION = 0
 
 BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s132_v201
 
-
+FINAL_BIN_DIR = ../../../../bin/$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)
 TEMPLATE_PATH = $(SDK_PATH)/toolchain/gcc
 
 #******************************************************************************
@@ -23,7 +23,7 @@ NRFUTIL = nrfutil
 ifeq ($(OS),Windows_NT)
 #PROGFILES = C:/Program Files
 PROGFILES = C:/Program Files (x86)
-GNU_INSTALL_ROOT = $(PROGFILES)/GNU Tools ARM Embedded/4.9 2015q1
+GNU_INSTALL_ROOT = $(PROGFILES)/GNU Tools ARM Embedded/6 2017-q2-update
 else
 GNU_INSTALL_ROOT = /usr
 endif
@@ -274,10 +274,12 @@ OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
 LINKER_SCRIPT = dfu_gcc_nrf52.ld
 
 export OUTPUT_FILENAME
+export OUTPUT_BINFILE
 BOOTLOADER_WITH_S132_NAME := $(OUTPUT_FILENAME)_$(BOOTLOADER_S132_SUFFIX)
 
 # Target for Feather nrf52 board
 feather52: OUTPUT_FILENAME := feather52_bootloader
+feather52: OUTPUT_BINFILE := FT52_$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)
 feather52: CFLAGS += -DBOARD_FEATHER52
 feather52: $(BUILD_DIRECTORIES) $(OBJECTS)
 	@echo Linking target: $(OUTPUT_FILENAME).out
@@ -286,6 +288,7 @@ feather52: $(BUILD_DIRECTORIES) $(OBJECTS)
 
 # Target for Metro nrf52 board
 metro52: OUTPUT_FILENAME := metro52_bootloader
+metro52: OUTPUT_BINFILE := MT52_$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)
 metro52: CFLAGS += -DBOARD_METRO52
 metro52: $(BUILD_DIRECTORIES) $(OBJECTS)
 	@echo Linking target: $(OUTPUT_FILENAME).out
@@ -310,35 +313,26 @@ $(OBJECT_DIRECTORY)/%.o: %.s
 $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out: $(BUILD_DIRECTORIES) $(OBJECTS)
 	@echo Linking target: $(OUTPUT_FILENAME).out
 	$(NO_ECHO)$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -lm -o $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
-	
-## Create binary .bin file from the .out file
-$(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).bin: $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
-	@echo Preparing: $(OUTPUT_FILENAME).bin
-	$(NO_ECHO)$(OBJCOPY) -O binary $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).bin
-
-## Create binary .hex file from the .out file
-$(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex: $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
-	@echo Preparing: $(OUTPUT_FILENAME).hex
-	$(NO_ECHO)$(OBJCOPY) -O ihex $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex
 
 #finalize: genbin genhex echosize
-finalize: genhex genpkg echosize
+finalize: genhex genbin genpkg echosize
 
 genbin:
-	@echo Preparing: $(OUTPUT_FILENAME).bin
-	$(NO_ECHO)$(OBJCOPY) -O binary $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).bin
+	@echo Preparing: $(OUTPUT_BINFILE).bin
+	$(NO_ECHO)$(OBJCOPY) -j .text -j .data -j .bss -O binary $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(FINAL_BIN_DIR)/$(OUTPUT_BINFILE).bin
+	#$(NO_ECHO)$(OBJCOPY) -O binary -I ihex $(SOFTDEVICE_HEX) $(FINAL_BIN_DIR)/S132_201.bin
 
 ## Create binary .hex file from the .out file
 genhex: 
 	@echo Preparing: $(OUTPUT_FILENAME).hex $(BOOTLOADER_WITH_S132_NAME).hex
 	$(NO_ECHO)$(OBJCOPY) -O ihex $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex
 	@mergehex -q -m $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex $(SOFTDEVICE_HEX) -o $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
-	@cp $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex ../../../../
+	@cp $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex $(FINAL_BIN_DIR)/
 
 ## Create pkg file for bootloader only and bootloader+SD combo to use with DFU
 genpkg:
 	@echo Preparing: $(BOOTLOADER_WITH_S132_NAME).zip
-	@$(NRFUTIL) dfu genpkg --dev-type 0x0052 --dev-revision 0xADAF --bootloader $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex --softdevice $(SOFTDEVICE_HEX) ../../../../$(BOOTLOADER_WITH_S132_NAME).zip 
+	@$(NRFUTIL) dfu genpkg --dev-type 0x0052 --dev-revision 0xADAF --bootloader $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex --softdevice $(SOFTDEVICE_HEX) $(FINAL_BIN_DIR)/$(BOOTLOADER_WITH_S132_NAME).zip 
 
 echosize:
 	-@echo ''
