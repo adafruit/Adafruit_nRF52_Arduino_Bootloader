@@ -3,19 +3,25 @@
 # - SDK_PATH        : path to SDK directory
 # - SOFTDEVICE_HEX  : path to bootloader hex binary
 #******************************************************************************
-SDK_PATH         = ../nRF5_SDK_11.0.0_89a8197/components
-SOFTDEVICE_HEX   = $(SDK_PATH)/softdevice/s132/hex/s132_nrf52_2.0.1_softdevice.hex
-
 VERSION_MAJOR    = 0
 VERSION_MINOR    = 5
-VERSION_REVISION = 0
+VERSION_REVISION = 5 # 0 : S132 v201, 5: S132 v500
 
+ifeq ($(VERSION_REVISION),0)
+SDK_PATH         = ../nRF5_SDK_11.0.0_89a8197/components
+SOFTDEVICE_HEX   = $(SDK_PATH)/softdevice/s132/hex/s132_nrf52_2.0.1_softdevice.hex
 BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s132_v201
+LINKER_SCRIPT = s132_v201.ld
+else
+SDK_PATH         = ../nRF5_SDK_14.0.0_3bcc1f7/components
+SOFTDEVICE_HEX   = $(SDK_PATH)/softdevice/s132/hex/s132_nrf52_5.0.0_softdevice.hex
+BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s132_v500
+LINKER_SCRIPT = s132_v500.ld
+endif
 
 FINAL_BIN_DIR = ../bin/$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)
 TEMPLATE_PATH = $(SDK_PATH)/toolchain/gcc
 
-LINKER_SCRIPT = s132_v201.ld
 
 #******************************************************************************
 # Tool configure
@@ -49,8 +55,6 @@ NM      := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-nm'
 OBJDUMP := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-objdump'
 OBJCOPY := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-objcopy'
 SIZE    := '$(GNU_INSTALL_ROOT)/bin/$(GNU_PREFIX)-size'
-
-
 
 #function for removing duplicates in a list
 remduplicates = $(strip $(if $1,$(firstword $1) $(call remduplicates,$(filter-out $(firstword $1),$1))))
@@ -100,7 +104,7 @@ $(abspath $(SDK_PATH)/softdevice/common/softdevice_handler/softdevice_handler_ap
 #******************************************************************************
 # Assembly Files
 #******************************************************************************
-ASM_SOURCE_FILES  = $(abspath $(SDK_PATH)/toolchain/gcc/gcc_startup_nrf52.s)
+ASM_SOURCE_FILES  = $(abspath $(SDK_PATH)/toolchain/gcc/gcc_startup_nrf52.S)
 
 #******************************************************************************
 # INCLUDE PATH
