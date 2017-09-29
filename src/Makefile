@@ -15,6 +15,8 @@ BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s1
 FINAL_BIN_DIR = ../bin/$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)
 TEMPLATE_PATH = $(SDK_PATH)/toolchain/gcc
 
+LINKER_SCRIPT = s132_v201.ld
+
 #******************************************************************************
 # Tool configure
 #******************************************************************************
@@ -270,7 +272,6 @@ vpath %.c $(C_PATHS)
 vpath %.s $(ASM_PATHS)
 
 OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
-LINKER_SCRIPT = dfu_gcc_nrf52.ld
 
 export OUTPUT_FILENAME
 export OUTPUT_BINFILE
