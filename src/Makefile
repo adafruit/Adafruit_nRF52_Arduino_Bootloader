@@ -2,16 +2,18 @@
 # CONFIGURE (no spaces!)
 # - SDK_PATH        : path to SDK directory
 # - SOFTDEVICE_HEX  : path to bootloader hex binary
+# - BOOT VERSION		: 050: S132 v201, 055: S132 v500
 #******************************************************************************
 VERSION_MAJOR    = 0
 VERSION_MINOR    = 5
-VERSION_REVISION = 5 # 0 : S132 v201, 5: S132 v500
+VERSION_REVISION = 0
 
 ifeq ($(VERSION_REVISION),0)
 SDK_PATH         = ../nRF5_SDK_11.0.0_89a8197/components
 SOFTDEVICE_HEX   = $(SDK_PATH)/softdevice/s132/hex/s132_nrf52_2.0.1_softdevice.hex
 BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s132_v201
-LINKER_SCRIPT = s132_v201.ld
+#LINKER_SCRIPT = s132_v201.ld
+LINKER_SCRIPT = s132_v500.ld
 else
 SDK_PATH         = ../nRF5_SDK_14.0.0_3bcc1f7/components
 SOFTDEVICE_HEX   = $(SDK_PATH)/softdevice/s132/hex/s132_nrf52_5.0.0_softdevice.hex
@@ -270,10 +272,10 @@ C_OBJECTS = $(addprefix $(OBJECT_DIRECTORY)/, $(C_SOURCE_FILE_NAMES:.c=.o) )
 
 ASM_SOURCE_FILE_NAMES = $(notdir $(ASM_SOURCE_FILES))
 ASM_PATHS = $(call remduplicates, $(dir $(ASM_SOURCE_FILES) ))
-ASM_OBJECTS = $(addprefix $(OBJECT_DIRECTORY)/, $(ASM_SOURCE_FILE_NAMES:.s=.o) )
+ASM_OBJECTS = $(addprefix $(OBJECT_DIRECTORY)/, $(ASM_SOURCE_FILE_NAMES:.S=.o) )
 
 vpath %.c $(C_PATHS)
-vpath %.s $(ASM_PATHS)
+vpath %.S $(ASM_PATHS)
 
 OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
 
@@ -309,7 +311,7 @@ $(OBJECT_DIRECTORY)/%.o: %.c
 	$(NO_ECHO)$(CC) $(CFLAGS) $(INC_PATHS) -c -o $@ $<
 
 # Assemble files
-$(OBJECT_DIRECTORY)/%.o: %.s
+$(OBJECT_DIRECTORY)/%.o: %.S
 	@echo Assembly file: $(notdir $<)
 	$(NO_ECHO)$(CC) $(ASMFLAGS) $(INC_PATHS) -c -o $@ $<
 	
