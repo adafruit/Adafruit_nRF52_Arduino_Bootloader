@@ -3,7 +3,7 @@
 # - SDK_PATH        : path to SDK directory
 # - SOFTDEVICE_HEX  : path to bootloader hex binary
 #******************************************************************************
-SDK_PATH         = ../../../components
+SDK_PATH         = ../nRF5_SDK_11.0.0_89a8197/components
 SOFTDEVICE_HEX   = $(SDK_PATH)/softdevice/s132/hex/s132_nrf52_2.0.1_softdevice.hex
 
 VERSION_MAJOR    = 0
@@ -12,7 +12,7 @@ VERSION_REVISION = 0
 
 BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s132_v201
 
-FINAL_BIN_DIR = ../../../../bin/$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)
+FINAL_BIN_DIR = ../bin/$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)
 TEMPLATE_PATH = $(SDK_PATH)/toolchain/gcc
 
 #******************************************************************************
@@ -21,7 +21,6 @@ TEMPLATE_PATH = $(SDK_PATH)/toolchain/gcc
 NRFUTIL = nrfutil
 
 ifeq ($(OS),Windows_NT)
-#PROGFILES = C:/Program Files
 PROGFILES = C:/Program Files (x86)
 GNU_INSTALL_ROOT = $(PROGFILES)/GNU Tools ARM Embedded/6 2017-q2-update
 else
