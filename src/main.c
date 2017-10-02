@@ -36,6 +36,8 @@
 #include "bootloader.h"
 #include "bootloader_util.h"
 #include "nordic_common.h"
+#include "sdk_common.h"
+
 #include "nrf.h"
 #include "nrf_soc.h"
 #include "app_error.h"
@@ -47,10 +49,16 @@
 #include "app_timer_appsh.h"
 #include "nrf_error.h"
 #include "boards.h"
+
 #include "softdevice_handler_appsh.h"
+//#include "nrf_sdh.h"
+//#include "nrf_sdh_ble.h"
+//#include "nrf_sdh_soc.h"
+
+
 #include "pstorage_platform.h"
 #include "nrf_mbr.h"
-#include "nrf_log.h"
+//#include "nrf_log.h"
 
 #include "nrf_wdt.h"
 #include "nrf_delay.h"
@@ -106,14 +114,6 @@ bool is_ota(void) { return _ota_update; }
 void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 {
     app_error_handler(0xDEADBEEF, line_num, p_file_name);
-}
-
-/**@brief Function for initializing the timer handler module (app_timer).
- */
-static void timers_init(void)
-{
-  // Initialize timer module, making it use the scheduler.
-  APP_TIMER_APPSH_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, true);
 }
 
 static void button_pin_init(uint32_t pin)
@@ -233,20 +233,20 @@ static void sys_evt_dispatch(uint32_t event)
  *                             be initialized if a chip reset has occured. Soft reset from
  *                             application must not reinitialize the SoftDevice.
  */
-static void ble_stack_init(bool init_softdevice)
+static uint32_t ble_stack_init(bool init_softdevice)
 {
   uint32_t         err_code;
-  sd_mbr_command_t com = {SD_MBR_COMMAND_INIT_SD, };
-  nrf_clock_lf_cfg_t clock_lf_cfg =
-  {
-      .source        = NRF_CLOCK_LF_SRC_RC,
-      .rc_ctiv       = 16,
-      .rc_temp_ctiv  = 2,
-      .xtal_accuracy = NRF_CLOCK_LF_XTAL_ACCURACY_20_PPM
-  };
+//  nrf_clock_lf_cfg_t clock_lf_cfg =
+//  {
+//      .source        = NRF_CLOCK_LF_SRC_RC,
+//      .rc_ctiv       = 16,
+//      .rc_temp_ctiv  = 2,
+//      .xtal_accuracy = NRF_CLOCK_LF_XTAL_ACCURACY_20_PPM
+//  };
 
   if (init_softdevice)
   {
+    sd_mbr_command_t com = { .command = SD_MBR_COMMAND_INIT_SD };
     err_code = sd_mbr_command(&com);
     APP_ERROR_CHECK(err_code);
   }
@@ -254,20 +254,50 @@ static void ble_stack_init(bool init_softdevice)
   err_code = sd_softdevice_vector_table_base_set(BOOTLOADER_REGION_START);
   APP_ERROR_CHECK(err_code);
 
-  SOFTDEVICE_HANDLER_APPSH_INIT(&clock_lf_cfg, true);
+//  SOFTDEVICE_HANDLER_APPSH_INIT(&clock_lf_cfg, true);
+
+  err_code = nrf_sdh_enable_request();
+  APP_ERROR_CHECK(err_code);
+
+  // Fetch the start address of the application RAM.
+  uint32_t  ram_start = 0;
+  err_code = nrf_sdh_ble_app_ram_start_get(&ram_start);
+  VERIFY_SUCCESS(err_code);
+
+  // Configure the maximum number of connections.
+  ble_cfg_t ble_cfg = {{0}};
+  memset(&ble_cfg, 0, sizeof(ble_cfg));
+  ble_cfg.gap_cfg.role_count_cfg.periph_role_count  = 1;
+  ble_cfg.gap_cfg.role_count_cfg.central_role_count = 0;
+  ble_cfg.gap_cfg.role_count_cfg.central_sec_count  = 0;
+  err_code = sd_ble_cfg_set(BLE_GAP_CFG_ROLE_COUNT, &ble_cfg, ram_start);
+
+  // NRF_DFU_BLE_REQUIRES_BONDS
+  ble_cfg_t ble_gatts_cfg_service_changed = {{0}};
+  ble_gatts_cfg_service_changed.gatts_cfg.service_changed.service_changed = 1;
+  err_code = sd_ble_cfg_set(BLE_GATTS_CFG_SERVICE_CHANGED, &ble_gatts_cfg_service_changed, ram_start);
+  VERIFY_SUCCESS(err_code);
 
   // Enable BLE stack.
-  ble_enable_params_t ble_enable_params;
-  // Only one connection as a central is used when performing dfu.
-  err_code = softdevice_enable_get_default_config(1, 1, &ble_enable_params);
-  APP_ERROR_CHECK(err_code);
+  err_code = nrf_sdh_ble_enable(&ram_start);
+  VERIFY_SUCCESS(err_code);
 
-  ble_enable_params.gatts_enable_params.service_changed = IS_SRVC_CHANGED_CHARACT_PRESENT;
-  err_code = softdevice_enable(&ble_enable_params);
-  APP_ERROR_CHECK(err_code);
+  NRF_SDH_BLE_OBSERVER(m_ble_evt_observer, 2, ble_evt_handler, NULL);
 
-  err_code = softdevice_sys_evt_handler_set(sys_evt_dispatch);
-  APP_ERROR_CHECK(err_code);
+  return err_code;
+
+//  // Enable BLE stack.
+//  ble_enable_params_t ble_enable_params;
+//  // Only one connection as a central is used when performing dfu.
+//  err_code = softdevice_enable_get_default_config(1, 1, &ble_enable_params);
+//  APP_ERROR_CHECK(err_code);
+//
+//  ble_enable_params.gatts_enable_params.service_changed = IS_SRVC_CHANGED_CHARACT_PRESENT;
+//  err_code = softdevice_enable(&ble_enable_params);
+//  APP_ERROR_CHECK(err_code);
+//
+//  err_code = softdevice_sys_evt_handler_set(sys_evt_dispatch);
+//  APP_ERROR_CHECK(err_code);
 }
 
 
@@ -325,7 +355,8 @@ int main(void)
   led_pin_init(LED_RED);
   led_pin_init(LED_BLUE); // on metro52 will override FRESET
 
-  timers_init();
+  // Initialize timer module, already configred to use with the scheduler.
+  APP_TIMER_APPSH_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, true);
 
   (void) bootloader_init();
 
