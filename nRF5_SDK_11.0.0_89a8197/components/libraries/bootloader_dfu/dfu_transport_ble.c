@@ -117,6 +117,10 @@ static bool                 m_ble_peer_data_valid    = false;                   
 static uint32_t             m_direct_adv_cnt         = APP_DIRECTED_ADV_TIMEOUT;                     /**< Counter of direct advertisements. */
 static uint8_t            * mp_final_packet;                                                         /**< Pointer to final data packet received. When callback for succesful packet handling is received from dfu bank handling a transfer complete response can be sent to peer. */
 
+
+static ble_gap_addr_t      const * m_whitelist[1];                                                  /**< List of peers in whitelist (only one) */
+static ble_gap_id_key_t    const * m_gap_ids[1];
+
 // Adafruit
 extern void blinky_fast_set(bool isFast);
 extern void blinky_ota_connected(void);
@@ -710,24 +714,25 @@ static void advertising_start(void)
             }
             else
             {
-                ble_gap_irk_t  * p_irk[1];
-                ble_gap_addr_t * p_addr[1];
+                m_whitelist[0] = &m_ble_peer_data.addr;
+                err_code = sd_ble_gap_whitelist_set(m_whitelist, 1);
+                APP_ERROR_CHECK(err_code);
 
-                p_irk[0]  = &m_ble_peer_data.irk;
-                p_addr[0] = &m_ble_peer_data.addr;
+                ble_gap_id_key_t id_key = {
+                    .id_info      = m_ble_peer_data.irk,
+                    .id_addr_info = m_ble_peer_data.addr
+                };
 
-                ble_gap_whitelist_t whitelist;
-                whitelist.addr_count = 1;
-                whitelist.pp_addrs   = p_addr;
-                whitelist.irk_count  = 1;
-                whitelist.pp_irks    = p_irk;
+                m_gap_ids[0] = &id_key;
+                err_code = sd_ble_gap_device_identities_set(m_gap_ids, NULL, 1);
+                APP_ERROR_CHECK(err_code);
 
                 advertising_init(BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED);
                 m_adv_params.type        = BLE_GAP_ADV_TYPE_ADV_IND;
                 m_adv_params.fp          = BLE_GAP_ADV_FP_FILTER_CONNREQ;
-                m_adv_params.p_whitelist = &whitelist;
                 m_adv_params.interval    = APP_ADV_INTERVAL;
                 m_adv_params.timeout     = APP_ADV_TIMEOUT_IN_SECONDS;
+
             }
         }
         else
@@ -740,7 +745,7 @@ static void advertising_start(void)
             m_adv_params.timeout     = APP_ADV_TIMEOUT_IN_SECONDS;
         }
 
-        err_code = sd_ble_gap_adv_start(&m_adv_params);
+        err_code = sd_ble_gap_adv_start(&m_adv_params, BLE_CONN_CFG_TAG_DEFAULT);
         APP_ERROR_CHECK(err_code);
 
 //        led_on(ADVERTISING_LED_PIN_NO);
@@ -1090,8 +1095,8 @@ uint32_t dfu_transport_ble_update_start(void)
         err_code = sd_ble_gap_addr_set(&addr);
         APP_ERROR_CHECK(err_code);
 
-        ble_gap_privacy_params_t privacy = { .privacy_mode = BLE_GAP_PRIVACY_MODE_OFF };
-        sd_ble_gap_privacy_set(&privacy);
+//        ble_gap_privacy_params_t privacy = { .privacy_mode = BLE_GAP_PRIVACY_MODE_OFF };
+//        sd_ble_gap_privacy_set(&privacy);
     }
 
     gap_params_init();
