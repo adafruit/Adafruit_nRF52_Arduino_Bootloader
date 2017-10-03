@@ -16,7 +16,7 @@ SOFTDEVICE_HEX   = $(SDK_PATH)/softdevice/s132/hex/s132_nrf52_2.0.1_softdevice.h
 BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s132_v201
 LINKER_SCRIPT = s132_v201.ld
 else
-SDK_PATH         = ../nRF5_SDK_14.0.0_3bcc1f7/components
+SDK_PATH         = ../nRF5_SDK_11.0.0_89a8197/components
 SOFTDEVICE_HEX   = $(SDK_PATH)/softdevice/s132/hex/s132_nrf52_5.0.0_softdevice.hex
 BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s132_v500
 LINKER_SCRIPT = s132_v500.ld
@@ -69,24 +69,21 @@ remduplicates = $(strip $(if $1,$(firstword $1) $(call remduplicates,$(filter-ou
 #source common to all targets
 C_SOURCE_FILES += main.c
 C_SOURCE_FILES += dfu_ble_svc.c
-C_SOURCE_FILES += libraries/bootloader_dfu/bootloader.c
-C_SOURCE_FILES += libraries/bootloader_dfu/bootloader_settings.c
-C_SOURCE_FILES += libraries/bootloader_dfu/bootloader_util.c
-C_SOURCE_FILES += libraries/bootloader_dfu/dfu_dual_bank.c
-C_SOURCE_FILES += libraries/bootloader_dfu/dfu_init_template.c
-C_SOURCE_FILES += libraries/bootloader_dfu/dfu_transport_serial.c
-C_SOURCE_FILES += libraries/bootloader_dfu/dfu_transport_ble.c
 
-C_SOURCE_FILES += drivers_nrf/pstorage/pstorage_raw.c
+C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/bootloader.c
+C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/bootloader_settings.c
+C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/bootloader_util.c
+C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/dfu_dual_bank.c
+C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/dfu_init_template.c
+C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/dfu_transport_serial.c
+C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/dfu_transport_ble.c
 
-C_SOURCE_FILES += libraries/timer/app_timer.c
-C_SOURCE_FILES += libraries/timer/app_timer_appsh.c
-C_SOURCE_FILES += libraries/scheduler/app_scheduler.c
-
+C_SOURCE_FILES += $(SDK_PATH)/libraries/timer/app_timer.c
+C_SOURCE_FILES += $(SDK_PATH)/libraries/timer/app_timer_appsh.c
+C_SOURCE_FILES += $(SDK_PATH)/libraries/scheduler/app_scheduler.c
 C_SOURCE_FILES += $(SDK_PATH)/libraries/util/app_error.c
 C_SOURCE_FILES += $(SDK_PATH)/libraries/util/app_error_weak.c
 C_SOURCE_FILES += $(SDK_PATH)/libraries/util/app_util_platform.c
-
 C_SOURCE_FILES += $(SDK_PATH)/libraries/crc16/crc16.c
 C_SOURCE_FILES += $(SDK_PATH)/libraries/hci/hci_mem_pool.c
 C_SOURCE_FILES += $(SDK_PATH)/libraries/hci/hci_slip.c
@@ -97,12 +94,14 @@ C_SOURCE_FILES += $(SDK_PATH)/libraries/uart/app_uart.c
 C_SOURCE_FILES += $(SDK_PATH)/drivers_nrf/delay/nrf_delay.c
 C_SOURCE_FILES += $(SDK_PATH)/drivers_nrf/common/nrf_drv_common.c
 C_SOURCE_FILES += $(SDK_PATH)/drivers_nrf/uart/nrf_drv_uart.c
+
 C_SOURCE_FILES += $(SDK_PATH)/ble/common/ble_advdata.c
 C_SOURCE_FILES += $(SDK_PATH)/ble/common/ble_conn_params.c
+C_SOURCE_FILES += $(SDK_PATH)/ble/common/ble_srv_common.c
 C_SOURCE_FILES += $(SDK_PATH)/ble/ble_services/ble_dfu/ble_dfu.c
 C_SOURCE_FILES += $(SDK_PATH)/ble/ble_services/ble_dis/ble_dis.c
-C_SOURCE_FILES += $(SDK_PATH)/ble/common/ble_srv_common.c
 
+C_SOURCE_FILES += $(SDK_PATH)/drivers_nrf/pstorage/pstorage_raw.c
 C_SOURCE_FILES += $(SDK_PATH)/toolchain/system_nrf52.c
 
 #C_SOURCE_FILES += $(SDK_PATH)/softdevice/common/nrf_sdh.c
@@ -124,14 +123,12 @@ ASM_SOURCE_FILES  = $(SDK_PATH)/toolchain/gcc/gcc_startup_nrf52.S
 # INCLUDE PATH
 #******************************************************************************
 INC_PATHS += -I./
-INC_PATHS += -Ilibraries/bootloader_dfu/hci_transport
-INC_PATHS += -Ilibraries/bootloader_dfu
 
-INC_PATHS += -Idrivers_nrf/pstorage
+INC_PATHS += -I$(SDK_PATH)/libraries/bootloader_dfu/hci_transport
+INC_PATHS += -I$(SDK_PATH)/libraries/bootloader_dfu
 
-INC_PATHS += -Ilibraries/timer
-INC_PATHS += -Ilibraries/scheduler
-
+INC_PATHS += -I$(SDK_PATH)/libraries/timer
+INC_PATHS += -I$(SDK_PATH)/libraries/scheduler
 INC_PATHS += -I$(SDK_PATH)/libraries/crc16
 INC_PATHS += -I$(SDK_PATH)/libraries/util
 INC_PATHS += -I$(SDK_PATH)/libraries/hci/config
@@ -145,16 +142,17 @@ INC_PATHS += -I$(SDK_PATH)/drivers_nrf/delay
 INC_PATHS += -I$(SDK_PATH)/drivers_nrf/uart
 
 INC_PATHS += -I$(SDK_PATH)/softdevice/common
+INC_PATHS += -I$(SDK_PATH)/softdevice/common/softdevice_handler/
 INC_PATHS += -I$(SDK_PATH)/softdevice/s132/headers
 INC_PATHS += -I$(SDK_PATH)/softdevice/s132/headers/nrf52
-INC_PATHS += -I$(SDK_PATH)/softdevice/common
 
 INC_PATHS += -I$(SDK_PATH)/device
+INC_PATHS += -I$(SDK_PATH)/drivers_nrf/pstorage
 
 INC_PATHS += -I$(SDK_PATH)/toolchain/cmsis/include
 INC_PATHS += -I$(SDK_PATH)/toolchain/gcc
 INC_PATHS += -I$(SDK_PATH)/toolchain
-INC_PATHS += -I$(SDK_PATH)/libraries/experimental_section_vars
+#INC_PATHS += -I$(SDK_PATH)/libraries/experimental_section_vars
 
 INC_PATHS += -I$(SDK_PATH)/ble/common
 INC_PATHS += -I$(SDK_PATH)/ble/ble_services/ble_dfu
