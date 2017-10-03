@@ -363,6 +363,7 @@ void SOFTDEVICE_EVT_IRQHandler(void)
     }
 }
 
+#if 0 // S132 v500 change API
 #if defined(BLE_STACK_SUPPORT_REQD)
 uint32_t softdevice_enable_get_default_config(uint8_t central_links_count,
                                               uint8_t periph_links_count,
@@ -486,5 +487,6 @@ uint32_t softdevice_enable(ble_enable_params_t * p_ble_enable_params)
 
 }
 /*lint -restore*/
+#endif
 
 #endif //BLE_STACK_SUPPORT_REQD

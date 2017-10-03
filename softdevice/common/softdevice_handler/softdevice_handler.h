@@ -92,7 +92,7 @@ typedef void (*sys_evt_handler_t) (uint32_t evt_id);
                                 EVT_HANDLER)                                                       \
     do                                                                                             \
     {                                                                                              \
-        static uint32_t BLE_EVT_BUFFER[CEIL_DIV(BLE_STACK_EVT_MSG_BUF_SIZE, sizeof(uint32_t))];    \
+        static uint32_t BLE_EVT_BUFFER[BLE_EVT_LEN_MAX(BLE_GATT_ATT_MTU_DEFAULT)/4 + 1];           \
         uint32_t ERR_CODE;                                                                         \
         ERR_CODE = softdevice_handler_init((CLOCK_SOURCE),                                         \
                                            BLE_EVT_BUFFER,                                         \
