@@ -1081,14 +1081,17 @@ uint32_t dfu_transport_ble_update_start(void)
     {
         ble_gap_addr_t addr;
 
-        err_code = sd_ble_gap_address_get(&addr);
+        err_code = sd_ble_gap_addr_get(&addr);
         APP_ERROR_CHECK(err_code);
 
         // Increase the BLE address by one when advertising openly.
         addr.addr[0] += 1;
 
-        err_code = sd_ble_gap_address_set(BLE_GAP_ADDR_CYCLE_MODE_NONE, &addr);
+        err_code = sd_ble_gap_addr_set(&addr);
         APP_ERROR_CHECK(err_code);
+
+        ble_gap_privacy_params_t privacy = { .privacy_mode = BLE_GAP_PRIVACY_MODE_OFF };
+        sd_ble_gap_privacy_set(&privacy);
     }
 
     gap_params_init();
