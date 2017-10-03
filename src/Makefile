@@ -109,8 +109,8 @@ C_SOURCE_FILES += $(SDK_PATH)/toolchain/system_nrf52.c
 #C_SOURCE_FILES += $(SDK_PATH)/softdevice/common/nrf_sdh_soc.c
 #C_SOURCE_FILES += $(SDK_PATH)/libraries/experimental_section_vars/nrf_section_iter.c
 
-C_SOURCE_FILES += $(SDK_PATH)/softdevice/common/softdevice_handler/softdevice_handler.c
-C_SOURCE_FILES += $(SDK_PATH)/softdevice/common/softdevice_handler/softdevice_handler_appsh.c
+C_SOURCE_FILES += ../softdevice/common/softdevice_handler/softdevice_handler.c
+C_SOURCE_FILES += ../softdevice/common/softdevice_handler/softdevice_handler_appsh.c
 
 
 
@@ -141,10 +141,10 @@ INC_PATHS += -I$(SDK_PATH)/drivers_nrf/config
 INC_PATHS += -I$(SDK_PATH)/drivers_nrf/delay
 INC_PATHS += -I$(SDK_PATH)/drivers_nrf/uart
 
-INC_PATHS += -I$(SDK_PATH)/softdevice/common
-INC_PATHS += -I$(SDK_PATH)/softdevice/common/softdevice_handler/
-INC_PATHS += -I$(SDK_PATH)/softdevice/s132/headers
-INC_PATHS += -I$(SDK_PATH)/softdevice/s132/headers/nrf52
+INC_PATHS += -I../softdevice/common
+INC_PATHS += -I../softdevice/common/softdevice_handler/
+INC_PATHS += -I../softdevice/s132/headers
+INC_PATHS += -I../softdevice/s132/headers/nrf52
 
 INC_PATHS += -I$(SDK_PATH)/device
 INC_PATHS += -I$(SDK_PATH)/drivers_nrf/pstorage
