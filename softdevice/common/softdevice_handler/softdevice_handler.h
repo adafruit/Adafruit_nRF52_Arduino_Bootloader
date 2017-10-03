@@ -150,7 +150,6 @@ uint32_t softdevice_handler_init(nrf_clock_lf_cfg_t *              p_clock_lf_cf
  */
 uint32_t softdevice_handler_sd_disable(void);
 
-
 /**@brief     Function for registering for System (SOC) events.
  *
  * @details   The application should use this function to register for receiving System (SOC)
@@ -167,6 +166,7 @@ uint32_t softdevice_handler_sd_disable(void);
  */
 uint32_t softdevice_sys_evt_handler_set(sys_evt_handler_t sys_evt_handler);
 
+#if 0 // S132 v500 change API
 #if defined(BLE_STACK_SUPPORT_REQD)
 /**@brief     Function for fetching the default enable parameters for the SoftDevice.
  *
@@ -201,6 +201,8 @@ uint32_t softdevice_enable_get_default_config(uint8_t central_links_count,
  */
 uint32_t softdevice_enable(ble_enable_params_t * p_ble_enable_params);
 #endif //BLE_STACK_SUPPORT_REQD
+#endif
+
 // Functions for connecting the Stack Event Handler to the scheduler:
 /**@cond NO_DOXYGEN */
 void intern_softdevice_events_execute(void);

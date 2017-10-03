@@ -17,7 +17,8 @@ BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s1
 LINKER_SCRIPT = s132_v201.ld
 else
 SDK_PATH         = ../nRF5_SDK_11.0.0_89a8197/components
-SOFTDEVICE_HEX   = $(SDK_PATH)/softdevice/s132/hex/s132_nrf52_5.0.0_softdevice.hex
+S1XX_PATH				 = ../softdevice/s132/v201
+SOFTDEVICE_HEX   = $(S1XX_PATH)/hex/s132_nrf52_5.0.0_softdevice.hex
 BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s132_v500
 LINKER_SCRIPT = s132_v500.ld
 endif
@@ -143,8 +144,8 @@ INC_PATHS += -I$(SDK_PATH)/drivers_nrf/uart
 
 INC_PATHS += -I../softdevice/common
 INC_PATHS += -I../softdevice/common/softdevice_handler/
-INC_PATHS += -I../softdevice/s132/headers
-INC_PATHS += -I../softdevice/s132/headers/nrf52
+INC_PATHS += -I$(S1XX_PATH)/headers
+INC_PATHS += -I$(S1XX_PATH)/headers/nrf52
 
 INC_PATHS += -I$(SDK_PATH)/device
 INC_PATHS += -I$(SDK_PATH)/drivers_nrf/pstorage
