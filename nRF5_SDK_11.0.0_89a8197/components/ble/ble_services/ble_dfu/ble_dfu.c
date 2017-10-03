@@ -186,7 +186,7 @@ static uint32_t dfu_ctrl_pt_add(ble_dfu_t * const p_dfu)
     attr_char_value.p_attr_md = &attr_md;
     attr_char_value.init_len  = 0;
     attr_char_value.init_offs = 0;
-    attr_char_value.max_len   = BLE_L2CAP_MTU_DEF;
+    attr_char_value.max_len   = BLE_GATT_ATT_MTU_DEFAULT;
     attr_char_value.p_value   = NULL;
 
     return sd_ble_gatts_characteristic_add(p_dfu->service_handle,
