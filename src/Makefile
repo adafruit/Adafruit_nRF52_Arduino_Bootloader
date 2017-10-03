@@ -1,7 +1,7 @@
 #******************************************************************************
 # CONFIGURE (no spaces!)
 # - SDK_PATH        : path to SDK directory
-# - SOFTDEVICE_HEX  : path to bootloader hex binary
+# - S1XX_HEX  : path to bootloader hex binary
 # - BOOT VERSION		: 050: S132 v201, 055: S132 v500
 #******************************************************************************
 VERSION_MAJOR    = 0
@@ -10,13 +10,13 @@ VERSION_REVISION = 5
 
 
 #S1XX_PATH				 = ../softdevice/s132/v201
-#SOFTDEVICE_HEX   = $(S1XX_PATH)/hex/s132_nrf52_2.0.1_softdevice.hex
+#S1XX_HEX   = $(S1XX_PATH)/hex/s132_nrf52_2.0.1_softdevice.hex
 #BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s132_v201
 #LINKER_SCRIPT 	 = s132_v201.ld
 
 SDK_PATH         = ../nRF5_SDK_11.0.0_89a8197/components
 S1XX_PATH				 = ../softdevice/s132/v500
-SOFTDEVICE_HEX   = $(S1XX_PATH)/hex/s132_nrf52_5.0.0_softdevice.hex
+S1XX_HEX   = $(S1XX_PATH)/hex/s132_nrf52_5.0.0_softdevice.hex
 BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s132_v500
 LINKER_SCRIPT 	 = s132_v500.ld
 
@@ -346,19 +346,18 @@ finalize: genhex genbin genpkg echosize
 genbin:
 	@echo Preparing: $(OUTPUT_BINFILE).bin
 	$(NO_ECHO)$(OBJCOPY) -j .text -j .data -j .bss -O binary $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(FINAL_BIN_DIR)/$(OUTPUT_BINFILE).bin
-	#$(NO_ECHO)$(OBJCOPY) -O binary -I ihex $(SOFTDEVICE_HEX) $(FINAL_BIN_DIR)/S132_201.bin
 
 ## Create binary .hex file from the .out file
 genhex: 
 	@echo Preparing: $(OUTPUT_FILENAME).hex $(BOOTLOADER_WITH_S132_NAME).hex
 	$(NO_ECHO)$(OBJCOPY) -O ihex $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex
-	@mergehex -q -m $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex $(SOFTDEVICE_HEX) -o $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
+	@mergehex -q -m $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex $(S1XX_HEX) -o $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
 	@cp $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex $(FINAL_BIN_DIR)/
 
 ## Create pkg file for bootloader only and bootloader+SD combo to use with DFU
 genpkg:
 	@echo Preparing: $(BOOTLOADER_WITH_S132_NAME).zip
-	@$(NRFUTIL) dfu genpkg --dev-type 0x0052 --dev-revision 0xADAF --bootloader $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex --softdevice $(SOFTDEVICE_HEX) $(FINAL_BIN_DIR)/$(BOOTLOADER_WITH_S132_NAME).zip 
+	@$(NRFUTIL) dfu genpkg --dev-type 0x0052 --dev-revision 0xADAF --bootloader $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex --softdevice $(S1XX_HEX) $(FINAL_BIN_DIR)/$(BOOTLOADER_WITH_S132_NAME).zip 
 
 echosize:
 	-@echo ''
