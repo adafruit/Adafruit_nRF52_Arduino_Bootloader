@@ -161,7 +161,7 @@ static uint32_t service_change_indicate()
         err_code = sd_ble_gatts_service_changed(m_conn_handle, DFU_SERVICE_HANDLE, BLE_HANDLE_MAX);
         if ((err_code == BLE_ERROR_INVALID_CONN_HANDLE) ||
             (err_code == NRF_ERROR_INVALID_STATE) ||
-            (err_code == BLE_ERROR_NO_TX_PACKETS))
+            (err_code == NRF_ERROR_BUSY))
         {
             // Those errors can be expected when sending trying to send Service Changed Indication
             // if the CCCD is not set to indicate. Thus set the returning error code to success.
