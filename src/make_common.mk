@@ -5,11 +5,6 @@
 # - S1XX_HEX  : path to bootloader hex binary
 #******************************************************************************
 
-#S1XX_PATH				 = ../softdevice/s132/v201
-#S1XX_HEX   = $(S1XX_PATH)/hex/s132_nrf52_2.0.1_softdevice.hex
-#BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s132_v201
-#LINKER_SCRIPT 	 = s132_v201.ld
-
 SDK_PATH      = ../../nRF5_SDK_11.0.0_89a8197/components
 SRC_PATH			= ..
 
@@ -17,9 +12,15 @@ S1XX_PATH			= ../../softdevice/s132/v500
 S1XX_HEX   		= $(S1XX_PATH)/hex/s132_nrf52_5.0.0_softdevice.hex
 
 LINKER_SCRIPT = $(SRC_PATH)/s132_v500.ld
-BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s132_v500
 
-FINAL_BIN_DIR := ../../bin/$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)
+ifeq ($(VERSION_SINGLEBANK),1)
+BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_single_s132
+FINAL_BIN_DIR := ../../bin/$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)_single
+else
+BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_dual_s132
+FINAL_BIN_DIR := ../../bin/$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)_dual
+endif
+
 TEMPLATE_PATH = $(SDK_PATH)/toolchain/gcc
 
 
@@ -166,7 +167,7 @@ BUILD_DIRECTORIES := $(sort $(OBJECT_DIRECTORY) $(OUTPUT_BINARY_DIRECTORY) $(LIS
 #*************************
 # Defined Symbol (MACROS)
 #*************************
-CFLAGS += -DBOOTLOADER_VERSION=0x0$(VERSION_MAJOR)0$(VERSION_MINOR)0$(VERSION_REVISION)
+CFLAGS += -DBOOTLOADER_VERSION=$(VERSION_MAJOR)<<24+$(VERSION_MINOR)<<16+$(VERSION_REVISION)<<8+$(VERSION_SINGLEBANK)
 CFLAGS += -DNRF52
 CFLAGS += -DNRF52_PAN_12
 CFLAGS += -DNRF52_PAN_15
@@ -332,7 +333,6 @@ $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out: $(BUILD_DIRECTORIES) $(OBJECT
 	@echo Linking target: $(OUTPUT_FILENAME).out
 	$(NO_ECHO)$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -lm -o $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
 
-#finalize: genbin genhex echosize
 finalize: genhex genbin genpkg echosize
 
 ## Create binary .hex file from the .out file
