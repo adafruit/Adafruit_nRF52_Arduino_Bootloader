@@ -148,7 +148,7 @@ __ASM (
        " BNE.n loop\n\t");
 }
 
-#elif defined ( _WIN32 ) || defined ( __unix ) || defined( __APPLE__ )
+#elif defined ( _WIN32 ) /*|| defined ( __unix )*/ || defined( __APPLE__ )
 
 __STATIC_INLINE void nrf_delay_us(uint32_t volatile number_of_us);
 

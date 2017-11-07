@@ -1,26 +1,25 @@
 #******************************************************************************
 # CONFIGURE (no spaces!)
-# - SDK_PATH        : path to SDK directory
+# - SDK_PATH  : path to SDK directory
+# - SRC_PATH  : path to src folder
 # - S1XX_HEX  : path to bootloader hex binary
-# - BOOT VERSION		: 050: S132 v201, 055: S132 v500
 #******************************************************************************
-VERSION_MAJOR    = 0
-VERSION_MINOR    = 5
-VERSION_REVISION = 5
-
 
 #S1XX_PATH				 = ../softdevice/s132/v201
 #S1XX_HEX   = $(S1XX_PATH)/hex/s132_nrf52_2.0.1_softdevice.hex
 #BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s132_v201
 #LINKER_SCRIPT 	 = s132_v201.ld
 
-SDK_PATH      = ../nRF5_SDK_11.0.0_89a8197/components
-S1XX_PATH			= ../softdevice/s132/v500
+SDK_PATH      = ../../nRF5_SDK_11.0.0_89a8197/components
+SRC_PATH			= ..
+
+S1XX_PATH			= ../../softdevice/s132/v500
 S1XX_HEX   		= $(S1XX_PATH)/hex/s132_nrf52_5.0.0_softdevice.hex
-LINKER_SCRIPT = s132_v500.ld
+
+LINKER_SCRIPT = $(SRC_PATH)/s132_v500.ld
 BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_s132_v500
 
-FINAL_BIN_DIR := ../bin/$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)
+FINAL_BIN_DIR := ../../bin/$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)
 TEMPLATE_PATH = $(SDK_PATH)/toolchain/gcc
 
 
@@ -65,13 +64,12 @@ remduplicates = $(strip $(if $1,$(firstword $1) $(call remduplicates,$(filter-ou
 # SOURCE FILES
 #******************************************************************************
 #source common to all targets
-C_SOURCE_FILES += main.c
-C_SOURCE_FILES += dfu_ble_svc.c
+C_SOURCE_FILES += $(SRC_PATH)/main.c
+C_SOURCE_FILES += $(SRC_PATH)/dfu_ble_svc.c
 
 C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/bootloader.c
 C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/bootloader_settings.c
 C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/bootloader_util.c
-C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/dfu_dual_bank.c
 C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/dfu_init_template.c
 C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/dfu_transport_serial.c
 C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/dfu_transport_ble.c
@@ -102,13 +100,8 @@ C_SOURCE_FILES += $(SDK_PATH)/ble/ble_services/ble_dis/ble_dis.c
 C_SOURCE_FILES += $(SDK_PATH)/drivers_nrf/pstorage/pstorage_raw.c
 C_SOURCE_FILES += $(SDK_PATH)/toolchain/system_nrf52.c
 
-#C_SOURCE_FILES += $(SDK_PATH)/softdevice/common/nrf_sdh.c
-#C_SOURCE_FILES += $(SDK_PATH)/softdevice/common/nrf_sdh_ble.c
-#C_SOURCE_FILES += $(SDK_PATH)/softdevice/common/nrf_sdh_soc.c
-#C_SOURCE_FILES += $(SDK_PATH)/libraries/experimental_section_vars/nrf_section_iter.c
-
-C_SOURCE_FILES += ../softdevice/common/softdevice_handler/softdevice_handler.c
-C_SOURCE_FILES += ../softdevice/common/softdevice_handler/softdevice_handler_appsh.c
+C_SOURCE_FILES += ../../softdevice/common/softdevice_handler/softdevice_handler.c
+C_SOURCE_FILES += ../../softdevice/common/softdevice_handler/softdevice_handler_appsh.c
 
 
 
@@ -120,7 +113,7 @@ ASM_SOURCE_FILES  = $(SDK_PATH)/toolchain/gcc/gcc_startup_nrf52.S
 #******************************************************************************
 # INCLUDE PATH
 #******************************************************************************
-INC_PATHS += -I./
+INC_PATHS += -I$(SRC_PATH)/
 
 INC_PATHS += -I$(SDK_PATH)/libraries/bootloader_dfu/hci_transport
 INC_PATHS += -I$(SDK_PATH)/libraries/bootloader_dfu
@@ -139,8 +132,8 @@ INC_PATHS += -I$(SDK_PATH)/drivers_nrf/config
 INC_PATHS += -I$(SDK_PATH)/drivers_nrf/delay
 INC_PATHS += -I$(SDK_PATH)/drivers_nrf/uart
 
-INC_PATHS += -I../softdevice/common
-INC_PATHS += -I../softdevice/common/softdevice_handler/
+INC_PATHS += -I../../softdevice/common
+INC_PATHS += -I../../softdevice/common/softdevice_handler/
 INC_PATHS += -I$(S1XX_PATH)/headers
 INC_PATHS += -I$(S1XX_PATH)/headers/nrf52
 
@@ -150,7 +143,6 @@ INC_PATHS += -I$(SDK_PATH)/drivers_nrf/pstorage
 INC_PATHS += -I$(SDK_PATH)/toolchain/cmsis/include
 INC_PATHS += -I$(SDK_PATH)/toolchain/gcc
 INC_PATHS += -I$(SDK_PATH)/toolchain
-#INC_PATHS += -I$(SDK_PATH)/libraries/experimental_section_vars
 
 INC_PATHS += -I$(SDK_PATH)/ble/common
 INC_PATHS += -I$(SDK_PATH)/ble/ble_services/ble_dfu
@@ -161,7 +153,7 @@ LISTING_DIRECTORY = $(OBJECT_DIRECTORY)
 OUTPUT_BINARY_DIRECTORY = $(OBJECT_DIRECTORY)
 
 # Sorting removes duplicates
-BUILD_DIRECTORIES := $(sort $(OBJECT_DIRECTORY) $(OUTPUT_BINARY_DIRECTORY) $(LISTING_DIRECTORY) )
+BUILD_DIRECTORIES := $(sort $(OBJECT_DIRECTORY) $(OUTPUT_BINARY_DIRECTORY) $(LISTING_DIRECTORY))
 
 #******************************************************************************
 # Compiler Flags
@@ -343,16 +335,18 @@ $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out: $(BUILD_DIRECTORIES) $(OBJECT
 #finalize: genbin genhex echosize
 finalize: genhex genbin genpkg echosize
 
-genbin:
-	@echo Preparing: $(OUTPUT_BINFILE).bin
-	$(NO_ECHO)$(OBJCOPY) -j .text -j .data -j .bss -O binary $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(FINAL_BIN_DIR)/$(OUTPUT_BINFILE).bin
-
 ## Create binary .hex file from the .out file
 genhex: 
 	@echo Preparing: $(OUTPUT_FILENAME).hex $(BOOTLOADER_WITH_S132_NAME).hex
 	$(NO_ECHO)$(OBJCOPY) -O ihex $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex
 	@mergehex -q -m $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex $(S1XX_HEX) -o $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
+	@mkdir -p $(FINAL_BIN_DIR)
 	@cp $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex $(FINAL_BIN_DIR)/
+
+## Create .bin file
+genbin:
+	@echo Preparing: $(OUTPUT_BINFILE).bin
+	$(NO_ECHO)$(OBJCOPY) -j .text -j .data -j .bss -O binary $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(FINAL_BIN_DIR)/$(OUTPUT_BINFILE).bin
 
 ## Create pkg file for bootloader only and bootloader+SD combo to use with DFU
 genpkg:
