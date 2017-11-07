@@ -346,7 +346,8 @@ genhex:
 ## Create .bin file
 genbin:
 	@echo Preparing: $(OUTPUT_BINFILE).bin
-	$(NO_ECHO)$(OBJCOPY) -j .text -j .data -j .bss -O binary $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(FINAL_BIN_DIR)/$(OUTPUT_BINFILE).bin
+	#$(NO_ECHO)$(OBJCOPY) -j .text -j .data -j .bss -O binary $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(FINAL_BIN_DIR)/$(OUTPUT_BINFILE).bin
+	$(NO_ECHO)$(OBJCOPY) -j .text -j .data -j .bss -O binary $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(FINAL_BIN_DIR)/$(BOOTLOADER_WITH_S132_NAME).bin
 
 ## Create pkg file for bootloader only and bootloader+SD combo to use with DFU
 genpkg:
