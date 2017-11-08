@@ -5,16 +5,15 @@
 # - SD_HEX   : path to bootloader hex binary
 #******************************************************************************
 
-SDK_PATH      = ../../nRF5_SDK_11.0.0_89a8197/components
-SRC_PATH			= ..
+SDK_PATH   = ../../nRF5_SDK_11.0.0_89a8197/components
+SRC_PATH   = ..
 
 SD_NAME    = s132
 SD_VERSION = 5.0.0
 
-SD_PATH			= ../../softdevice/$(SD_NAME)/$(SD_VERSION)
-SD_HEX   		= $(SD_PATH)/hex/$(SD_NAME)_nrf52_$(SD_VERSION)_softdevice.hex
-
-LINKER_SCRIPT = $(SRC_PATH)/s132_v500.ld
+SD_PATH       = ../../softdevice/$(SD_NAME)/$(SD_VERSION)
+SD_HEX        = $(SD_PATH)/hex/$(SD_NAME)_nrf52_$(SD_VERSION)_softdevice.hex
+LINKER_SCRIPT = $(SRC_PATH)/$(SD_NAME)_$(SD_VERSION).ld
 
 ifeq ($(VERSION_SINGLEBANK),1)
 BANKMODE = single
