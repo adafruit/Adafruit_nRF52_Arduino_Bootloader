@@ -1,25 +1,29 @@
 #******************************************************************************
 # CONFIGURE (no spaces!)
-# - SDK_PATH  : path to SDK directory
-# - SRC_PATH  : path to src folder
-# - S1XX_HEX  : path to bootloader hex binary
+# - SDK_PATH : path to SDK directory
+# - SRC_PATH : path to src folder
+# - SD_HEX   : path to bootloader hex binary
 #******************************************************************************
 
 SDK_PATH      = ../../nRF5_SDK_11.0.0_89a8197/components
 SRC_PATH			= ..
 
-S1XX_PATH			= ../../softdevice/s132/v500
-S1XX_HEX   		= $(S1XX_PATH)/hex/s132_nrf52_5.0.0_softdevice.hex
+SD_NAME    = s132
+SD_VERSION = 5.0.0
+
+SD_PATH			= ../../softdevice/$(SD_NAME)/$(SD_VERSION)
+SD_HEX   		= $(SD_PATH)/hex/$(SD_NAME)_nrf52_$(SD_VERSION)_softdevice.hex
 
 LINKER_SCRIPT = $(SRC_PATH)/s132_v500.ld
 
 ifeq ($(VERSION_SINGLEBANK),1)
-BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_single_s132
-FINAL_BIN_DIR := ../../bin/$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)_single
+BANKMODE = single
 else
-BOOTLOADER_S132_SUFFIX = v$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)_dual_s132
-FINAL_BIN_DIR := ../../bin/$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)_dual
+BANKMODE = dual
 endif
+
+BOOTLOADER_S132_SUFFIX = $(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)_s132_$(BANKMODE)
+FINAL_BIN_DIR := ../../bin/$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)
 
 TEMPLATE_PATH = $(SDK_PATH)/toolchain/gcc
 
@@ -135,8 +139,8 @@ INC_PATHS += -I$(SDK_PATH)/drivers_nrf/uart
 
 INC_PATHS += -I../../softdevice/common
 INC_PATHS += -I../../softdevice/common/softdevice_handler/
-INC_PATHS += -I$(S1XX_PATH)/headers
-INC_PATHS += -I$(S1XX_PATH)/headers/nrf52
+INC_PATHS += -I$(SD_PATH)/headers
+INC_PATHS += -I$(SD_PATH)/headers/nrf52
 
 INC_PATHS += -I$(SDK_PATH)/device
 INC_PATHS += -I$(SDK_PATH)/drivers_nrf/pstorage
@@ -254,6 +258,13 @@ MAKEFILE_DIR := $(dir $(MAKEFILE_NAME) )
 # BUILD TARGETS
 #******************************************************************************
 
+ifeq ("$(VERBOSE)","1")
+$(info CFLAGS   $(CFLAGS))
+$(info )
+$(info LDFLAGS  $(LDFLAGS))
+$(info )
+endif
+
 #default target - first one defined
 default: all
 
@@ -290,14 +301,12 @@ vpath %.S $(ASM_PATHS)
 OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
 
 export OUTPUT_FILENAME
-export OUTPUT_BINFILE
 export FINAL_BIN_DIR
 BOOTLOADER_WITH_S132_NAME := $(OUTPUT_FILENAME)_$(BOOTLOADER_S132_SUFFIX)
 
 # Target for Feather nrf52 board
 feather52: OUTPUT_FILENAME := feather52_bootloader
-feather52: OUTPUT_BINFILE := FT52_$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)
-feather52: FINAL_BIN_DIR := $(FINAL_BIN_DIR)/feather52
+feather52: FINAL_BIN_DIR := $(FINAL_BIN_DIR)/feather52/$(BANKMODE)
 feather52: CFLAGS += -DBOARD_FEATHER52
 feather52: $(BUILD_DIRECTORIES) $(OBJECTS)
 	@echo Linking target: $(OUTPUT_FILENAME).out
@@ -306,8 +315,7 @@ feather52: $(BUILD_DIRECTORIES) $(OBJECTS)
 
 # Target for Metro nrf52 board
 metro52: OUTPUT_FILENAME := metro52_bootloader
-metro52: OUTPUT_BINFILE := MT52_$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)
-metro52: FINAL_BIN_DIR := $(FINAL_BIN_DIR)/metro52
+metro52: FINAL_BIN_DIR := $(FINAL_BIN_DIR)/metro52/$(BANKMODE)
 metro52: CFLAGS += -DBOARD_METRO52
 metro52: $(BUILD_DIRECTORIES) $(OBJECTS)
 	@echo Linking target: $(OUTPUT_FILENAME).out
@@ -339,20 +347,19 @@ finalize: genhex genbin genpkg echosize
 genhex: 
 	@echo Preparing: $(OUTPUT_FILENAME).hex $(BOOTLOADER_WITH_S132_NAME).hex
 	$(NO_ECHO)$(OBJCOPY) -O ihex $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex
-	@mergehex -q -m $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex $(S1XX_HEX) -o $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
+	@mergehex -q -m $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex $(SD_HEX) -o $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
 	@mkdir -p $(FINAL_BIN_DIR)
 	@cp $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex $(FINAL_BIN_DIR)/
 
 ## Create .bin file
 genbin:
-	@echo Preparing: $(OUTPUT_BINFILE).bin
-	#$(NO_ECHO)$(OBJCOPY) -j .text -j .data -j .bss -O binary $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(FINAL_BIN_DIR)/$(OUTPUT_BINFILE).bin
+	@echo Preparing: $(BOOTLOADER_WITH_S132_NAME).bin
 	$(NO_ECHO)$(OBJCOPY) -j .text -j .data -j .bss -O binary $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(FINAL_BIN_DIR)/$(BOOTLOADER_WITH_S132_NAME).bin
 
 ## Create pkg file for bootloader only and bootloader+SD combo to use with DFU
 genpkg:
 	@echo Preparing: $(BOOTLOADER_WITH_S132_NAME).zip
-	@$(NRFUTIL) dfu genpkg --dev-type 0x0052 --dev-revision 0xADAF --bootloader $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex --softdevice $(S1XX_HEX) $(FINAL_BIN_DIR)/$(BOOTLOADER_WITH_S132_NAME).zip 
+	@$(NRFUTIL) dfu genpkg --dev-type 0x0052 --dev-revision 0xADAF --bootloader $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex --softdevice $(SD_HEX) $(FINAL_BIN_DIR)/$(BOOTLOADER_WITH_S132_NAME).zip 
 
 echosize:
 	-@echo ''
