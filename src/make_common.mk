@@ -1,15 +1,17 @@
 #******************************************************************************
 # CONFIGURE (no spaces!)
-# - SDK_PATH : path to SDK directory
-# - SRC_PATH : path to src folder
-# - SD_HEX   : path to bootloader hex binary
+# - SDK_PATH   : path to SDK directory
+# - SRC_PATH   : path to src folder
+# - SD_NAME    : e.g s132, s140
+# - SD_VERSION : e.g 5.0.0
+# - SD_HEX     : path to bootloader hex binary
 #******************************************************************************
 
-SDK_PATH   = ../../nRF5_SDK_11.0.0_89a8197/components
-SRC_PATH   = ..
+SDK_PATH      = ../../nRF5_SDK_11.0.0_89a8197/components
+SRC_PATH      = ..
 
-SD_NAME    = s132
-SD_VERSION = 5.0.0
+SD_NAME       = s132
+SD_VERSION    = 5.0.0
 
 SD_PATH       = ../../softdevice/$(SD_NAME)/$(SD_VERSION)
 SD_HEX        = $(SD_PATH)/hex/$(SD_NAME)_nrf52_$(SD_VERSION)_softdevice.hex
@@ -21,7 +23,7 @@ else
 BANKMODE = dual
 endif
 
-BOOTLOADER_S132_SUFFIX = $(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)_s132_$(BANKMODE)
+BOOTLOADER_S132_SUFFIX = $(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)_$(SD_NAME)_$(BANKMODE)
 FINAL_BIN_DIR := ../../bin/$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)
 
 TEMPLATE_PATH = $(SDK_PATH)/toolchain/gcc
@@ -170,7 +172,7 @@ BUILD_DIRECTORIES := $(sort $(OBJECT_DIRECTORY) $(OUTPUT_BINARY_DIRECTORY) $(LIS
 #*************************
 # Defined Symbol (MACROS)
 #*************************
-CFLAGS += -DBOOTLOADER_VERSION=$(VERSION_MAJOR)<<24+$(VERSION_MINOR)<<16+$(VERSION_REVISION)<<8+$(VERSION_SINGLEBANK)
+CFLAGS += -DBOOTLOADER_VERSION=0x0$(VERSION_MAJOR)0$(VERSION_MINOR)0$(VERSION_REVISION)0$(VERSION_SINGLEBANK)UL
 CFLAGS += -DNRF52
 CFLAGS += -DNRF52_PAN_12
 CFLAGS += -DNRF52_PAN_15
