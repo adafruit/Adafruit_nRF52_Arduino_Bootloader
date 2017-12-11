@@ -1,30 +1,39 @@
 #******************************************************************************
 # CONFIGURE (no spaces!)
+# - VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION: e.g 5.0.0 or 5.1.0 (usually
+# is the same to the SoftDevice if possible)
+#
 # - SDK_PATH   : path to SDK directory
 # - SRC_PATH   : path to src folder
+#
 # - SD_NAME    : e.g s132, s140
 # - SD_VERSION : e.g 5.0.0
 # - SD_HEX     : path to bootloader hex binary
 #******************************************************************************
+VERSION_MAJOR    = 5
+VERSION_MINOR    = 1
+VERSION_REVISION = 0
 
-SDK_PATH      = ../../nRF5_SDK_11.0.0_89a8197/components
-SRC_PATH      = ..
+SDK_PATH         = ../../nRF5_SDK_11.0.0_89a8197/components
+SRC_PATH         = ..
 
-SD_NAME       = s132
-SD_VERSION    = 5.0.0
+SD_NAME          = s132
+SD_VERSION       = 5.1.0
 
-SD_PATH       = ../../softdevice/$(SD_NAME)/$(SD_VERSION)
-SD_HEX        = $(SD_PATH)/hex/$(SD_NAME)_nrf52_$(SD_VERSION)_softdevice.hex
-LINKER_SCRIPT = $(SRC_PATH)/$(SD_NAME)_$(SD_VERSION).ld
+SD_PATH          = ../../softdevice/$(SD_NAME)/$(SD_VERSION)
+SD_HEX           = $(SD_PATH)/hex/$(SD_NAME)_nrf52_$(SD_VERSION)_softdevice.hex
+LINKER_SCRIPT    = $(SRC_PATH)/$(SD_NAME)_$(SD_VERSION).ld
 
 ifeq ($(VERSION_SINGLEBANK),1)
 BANKMODE = single
+C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/dfu_single_bank.c
 else
 BANKMODE = dual
+C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/dfu_dual_bank.c
 endif
 
 BOOTLOADER_S132_SUFFIX = $(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)_$(SD_NAME)_$(BANKMODE)
-FINAL_BIN_DIR := ../../bin/$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)
+FINAL_BIN_DIR := ../../bin
 
 TEMPLATE_PATH = $(SDK_PATH)/toolchain/gcc
 
@@ -307,7 +316,7 @@ BOOTLOADER_WITH_S132_NAME := $(OUTPUT_FILENAME)_$(BOOTLOADER_S132_SUFFIX)
 
 # Target for Feather nrf52 board
 feather52: OUTPUT_FILENAME := feather52_bootloader
-feather52: FINAL_BIN_DIR := $(FINAL_BIN_DIR)/feather52/$(BANKMODE)
+feather52: FINAL_BIN_DIR := $(FINAL_BIN_DIR)/feather52/$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)/$(BANKMODE)
 feather52: CFLAGS += -DBOARD_FEATHER52
 feather52: $(BUILD_DIRECTORIES) $(OBJECTS)
 	@echo Linking target: $(OUTPUT_FILENAME).out
