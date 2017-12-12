@@ -49,7 +49,8 @@
 #define DIS_MANUFACTURER                     "Adafruit Industries"
 // DIS_MODEL is defined in boards.h
 
-#define DIS_FIRMWARE                         "S132 2.0.1, 0.5.0" // Update when upgrade bootloader
+// TODO Update when upgrade bootloader
+#define DIS_FIRMWARE                         "S132 5.1.0, 5.1.0"
 
 
 #define MIN_CONN_INTERVAL                    (uint16_t)(MSEC_TO_UNITS(15, UNIT_1_25_MS))             /**< Minimum acceptable connection interval (11.25 milliseconds). */
