@@ -65,13 +65,10 @@
 #include "pstorage.h"
 
 
-#define BOOTLOADER_VERSION_REGISTER     NRF_TIMER2->CC[0]
+#define BOOTLOADER_VERSION_REGISTER         NRF_TIMER2->CC[0]
 
-#define IS_SRVC_CHANGED_CHARACT_PRESENT 1                        /**< Include the service_changed characteristic. For DFU this should normally be the case. */
-
-#define LED_BLINK_INTERVAL              100
-
-#define BOOTLOADER_STARTUP_DFU_INTERVAL 1000
+#define LED_BLINK_INTERVAL                  100
+#define BOOTLOADER_STARTUP_DFU_INTERVAL     1000
 
 /* Magic that written to NRF_POWER->GPREGRET by application when it wish to go into DFU
  * - BOOTLOADER_DFU_OTA_MAGIC used by BLEDfu service : SD is already init
@@ -92,6 +89,20 @@
 
 #define SCHED_MAX_EVENT_DATA_SIZE           MAX(APP_TIMER_SCHED_EVT_SIZE, 0) /**< Maximum size of scheduler events. */
 #define SCHED_QUEUE_SIZE                    20                               /**< Maximum number of events in the scheduler queue. */
+
+// Helper function
+#define memclr(buffer, size)                memset(buffer, 0, size)
+#define varclr(_var)                        memclr(_var, sizeof(*(_var)))
+#define arrclr(_arr)                        memclr(_arr, sizeof(_arr))
+#define arrcount(_arr)                      ( sizeof(_arr) / sizeof(_arr[0]) )
+
+
+// These value must be the same with one in dfu_transport_ble.c
+#define BLEGAP_EVENT_LENGTH             6
+#define BLEGATT_ATT_MTU_MAX             247
+enum { BLE_CONN_CFG_HIGH_BANDWIDTH = 1 };
+
+
 
 // Adafruit for factory reset
 #define APPDATA_ADDR_START                  (BOOTLOADER_REGION_START-DFU_APP_DATA_RESERVED)
@@ -257,26 +268,39 @@ static uint32_t ble_stack_init(bool init_softdevice)
   // equivalent to nrf_sdh_enable_request()
   SOFTDEVICE_HANDLER_APPSH_INIT(&clock_lf_cfg, true);
 
-  // Fetch the start address of the application RAM.
-//  uint32_t  ram_start = 0;
-//  nrf_sdh_ble_app_ram_start_get(&ram_start);
-
+  /*------------- Configure BLE params  -------------*/
   extern uint32_t  __data_start__[]; // defined in linker
   uint32_t ram_start = (uint32_t) __data_start__;
 
+  ble_cfg_t blecfg;
+
   // Configure the maximum number of connections.
-  ble_cfg_t ble_cfg;
-  memset(&ble_cfg, 0, sizeof(ble_cfg));
-  ble_cfg.gap_cfg.role_count_cfg.periph_role_count  = 1;
-  ble_cfg.gap_cfg.role_count_cfg.central_role_count = 0;
-  ble_cfg.gap_cfg.role_count_cfg.central_sec_count  = 0;
-  err_code = sd_ble_cfg_set(BLE_GAP_CFG_ROLE_COUNT, &ble_cfg, ram_start);
+  varclr(&blecfg);
+  blecfg.gap_cfg.role_count_cfg.periph_role_count  = 1;
+  blecfg.gap_cfg.role_count_cfg.central_role_count = 0;
+  blecfg.gap_cfg.role_count_cfg.central_sec_count  = 0;
+  err_code = sd_ble_cfg_set(BLE_GAP_CFG_ROLE_COUNT, &blecfg, ram_start);
 
   // NRF_DFU_BLE_REQUIRES_BONDS
-  ble_cfg_t ble_gatts_cfg_service_changed;
-  ble_gatts_cfg_service_changed.gatts_cfg.service_changed.service_changed = 1;
-  err_code = sd_ble_cfg_set(BLE_GATTS_CFG_SERVICE_CHANGED, &ble_gatts_cfg_service_changed, ram_start);
+  varclr(&blecfg);
+  blecfg.gatts_cfg.service_changed.service_changed = 1;
+  err_code = sd_ble_cfg_set(BLE_GATTS_CFG_SERVICE_CHANGED, &blecfg, ram_start);
   VERIFY_SUCCESS(err_code);
+
+  // ATT MTU
+  varclr(&blecfg);
+  blecfg.conn_cfg.conn_cfg_tag = BLE_CONN_CFG_HIGH_BANDWIDTH;
+  blecfg.conn_cfg.params.gatt_conn_cfg.att_mtu = BLEGATT_ATT_MTU_MAX;
+  err_code = sd_ble_cfg_set(BLE_CONN_CFG_GATT, &blecfg, ram_start);
+  VERIFY_SUCCESS ( err_code );
+
+  // Event Length + HVN queue + WRITE CMD queue setting affecting bandwidth
+  varclr(&blecfg);
+  blecfg.conn_cfg.conn_cfg_tag = BLE_CONN_CFG_HIGH_BANDWIDTH;
+  blecfg.conn_cfg.params.gap_conn_cfg.conn_count   = 1;
+  blecfg.conn_cfg.params.gap_conn_cfg.event_length = BLEGAP_EVENT_LENGTH;
+  err_code = sd_ble_cfg_set(BLE_CONN_CFG_GAP, &blecfg, ram_start);
+  VERIFY_SUCCESS ( err_code );
 
   // Enable BLE stack.
   err_code = sd_ble_enable(&ram_start);

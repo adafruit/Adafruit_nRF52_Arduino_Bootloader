@@ -37,6 +37,11 @@
 #include "nrf_delay.h"
 #include "sdk_common.h"
 
+
+#define BLEGAP_EVENT_LENGTH             6
+#define BLEGATT_ATT_MTU_MAX             247
+enum { BLE_CONN_CFG_HIGH_BANDWIDTH = 1 };
+
 #define DFU_REV_MAJOR                        0x00                                                    /** DFU Major revision number to be exposed. */
 #define DFU_REV_MINOR                        0x08                                                    /** DFU Minor revision number to be exposed. */
 #define DFU_REVISION                         ((DFU_REV_MAJOR << 8) | DFU_REV_MINOR)                  /** DFU Revision number to be exposed. Combined of major and minor versions. */
@@ -53,7 +58,7 @@
 #define DIS_FIRMWARE                         "S132 5.1.0, 5.1.0"
 
 
-#define MIN_CONN_INTERVAL                    (uint16_t)(MSEC_TO_UNITS(15, UNIT_1_25_MS))             /**< Minimum acceptable connection interval (11.25 milliseconds). */
+#define MIN_CONN_INTERVAL                    (uint16_t)(MSEC_TO_UNITS(10, UNIT_1_25_MS))             /**< Minimum acceptable connection interval (11.25 milliseconds). */
 #define MAX_CONN_INTERVAL                    (uint16_t)(MSEC_TO_UNITS(30, UNIT_1_25_MS))             /**< Maximum acceptable connection interval (15 milliseconds). */
 #define SLAVE_LATENCY                        0                                                       /**< Slave latency. */
 #define CONN_SUP_TIMEOUT                     (4 * 100)                                               /**< Connection supervisory timeout (4 seconds). */
@@ -746,7 +751,7 @@ static void advertising_start(void)
             m_adv_params.timeout     = APP_ADV_TIMEOUT_IN_SECONDS;
         }
 
-        err_code = sd_ble_gap_adv_start(&m_adv_params, BLE_CONN_CFG_TAG_DEFAULT);
+        err_code = sd_ble_gap_adv_start(&m_adv_params, BLE_CONN_CFG_HIGH_BANDWIDTH);
         APP_ERROR_CHECK(err_code);
 
 //        led_on(ADVERTISING_LED_PIN_NO);
@@ -934,6 +939,19 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
             // No implementation needed.
             break;
 
+        case BLE_GAP_EVT_DATA_LENGTH_UPDATE_REQUEST:
+          // Let Softdevice decide the data length
+          // ble_gap_data_length_params_t* param = &evt->evt.gap_evt.params.data_length_update_request.peer_params
+          APP_ERROR_CHECK( sd_ble_gap_data_length_update(m_conn_handle, NULL, NULL) );
+        break;
+
+        case BLE_GATTS_EVT_EXCHANGE_MTU_REQUEST:
+        {
+          uint16_t att_mtu = MIN(p_ble_evt->evt.gatts_evt.params.exchange_mtu_request.client_rx_mtu, BLEGATT_ATT_MTU_MAX);
+          APP_ERROR_CHECK( sd_ble_gatts_exchange_mtu_reply(m_conn_handle, att_mtu) );
+        }
+        break;
+
         default:
             // No implementation needed.
             break;
@@ -1104,6 +1122,8 @@ uint32_t dfu_transport_ble_update_start(void)
     services_init();
     conn_params_init();
     sec_params_init();
+
+    sd_ble_gap_tx_power_set(4); // maximum power
     advertising_start();
 
     return NRF_SUCCESS;
