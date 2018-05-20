@@ -967,7 +967,7 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
  *
  * @param[in] p_ble_evt S110 SoftDevice event.
  */
-static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
+/*static*/ void ble_evt_dispatch(ble_evt_t * p_ble_evt)
 {
     ble_conn_params_on_ble_evt(p_ble_evt);
     ble_dfu_on_ble_evt(&m_dfu, p_ble_evt);
@@ -1032,6 +1032,12 @@ static void service_error_handler(uint32_t nrf_error)
 }
 
 
+static void ascii_to_utf8(ble_srv_utf8_str_t * p_utf8, char * p_ascii)
+{
+    p_utf8->length = (uint16_t)strlen(p_ascii);
+    p_utf8->p_str  = (uint8_t *)p_ascii;
+}
+
 /**@brief     Function for initializing services that will be used by the application.
  */
 static void services_init(void)
@@ -1053,9 +1059,9 @@ static void services_init(void)
     ble_dis_init_t dis_init;
     memset(&dis_init, 0, sizeof(dis_init));
 
-    ble_srv_ascii_to_utf8(&dis_init.manufact_name_str, DIS_MANUFACTURER);
-    ble_srv_ascii_to_utf8(&dis_init.model_num_str, DIS_MODEL);
-    ble_srv_ascii_to_utf8(&dis_init.fw_rev_str, DIS_FIRMWARE);
+    ascii_to_utf8(&dis_init.manufact_name_str, DIS_MANUFACTURER);
+    ascii_to_utf8(&dis_init.model_num_str, DIS_MODEL);
+    ascii_to_utf8(&dis_init.fw_rev_str, DIS_FIRMWARE);
 
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&dis_init.dis_attr_md.read_perm);
     BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&dis_init.dis_attr_md.write_perm);
@@ -1087,9 +1093,6 @@ uint32_t dfu_transport_ble_update_start(void)
     m_pkt_type              = PKT_TYPE_INVALID;
 
     leds_init();
-
-    err_code = softdevice_ble_evt_handler_set(ble_evt_dispatch);
-    VERIFY_SUCCESS(err_code);
 
     dfu_register_callback(dfu_cb_handler);
 
