@@ -14,13 +14,13 @@ VERSION_MAJOR    = 5
 VERSION_MINOR    = 1
 VERSION_REVISION = 0
 
-SDK_PATH         = ../../nRF5_SDK_11.0.0_89a8197/components
+SDK_PATH         = ../../lib/sdk11/components
 SRC_PATH         = ..
 
 SD_NAME          = s132
 SD_VERSION       = 5.1.0
 
-SD_PATH          = ../../softdevice/$(SD_NAME)/$(SD_VERSION)
+SD_PATH          = ../../lib/softdevice/$(SD_NAME)/$(SD_VERSION)
 SD_HEX           = $(SD_PATH)/hex/$(SD_NAME)_nrf52_$(SD_VERSION)_softdevice.hex
 LINKER_SCRIPT    = $(SRC_PATH)/$(SD_NAME)_$(SD_VERSION).ld
 
@@ -32,7 +32,7 @@ BANKMODE = dual
 C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/dfu_dual_bank.c
 endif
 
-BOOTLOADER_S132_SUFFIX = $(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)_$(SD_NAME)_$(BANKMODE)
+BOOTLOADER_SD_SUFFIX = $(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)_$(SD_NAME)_$(BANKMODE)
 FINAL_BIN_DIR := ../../bin
 
 TEMPLATE_PATH = $(SDK_PATH)/toolchain/gcc
@@ -115,8 +115,8 @@ C_SOURCE_FILES += $(SDK_PATH)/ble/ble_services/ble_dis/ble_dis.c
 C_SOURCE_FILES += $(SDK_PATH)/drivers_nrf/pstorage/pstorage_raw.c
 C_SOURCE_FILES += $(SDK_PATH)/toolchain/system_nrf52.c
 
-C_SOURCE_FILES += ../../softdevice/common/softdevice_handler/softdevice_handler.c
-C_SOURCE_FILES += ../../softdevice/common/softdevice_handler/softdevice_handler_appsh.c
+#C_SOURCE_FILES += ../../lib/softdevice/common/softdevice_handler/softdevice_handler.c
+#C_SOURCE_FILES += ../../lib/softdevice/common/softdevice_handler/softdevice_handler_appsh.c
 
 
 
@@ -147,8 +147,8 @@ INC_PATHS += -I$(SDK_PATH)/drivers_nrf/config
 INC_PATHS += -I$(SDK_PATH)/drivers_nrf/delay
 INC_PATHS += -I$(SDK_PATH)/drivers_nrf/uart
 
-INC_PATHS += -I../../softdevice/common
-INC_PATHS += -I../../softdevice/common/softdevice_handler/
+INC_PATHS += -I../../lib/softdevice/common
+INC_PATHS += -I../../lib/softdevice/common/softdevice_handler/
 INC_PATHS += -I$(SD_PATH)/headers
 INC_PATHS += -I$(SD_PATH)/headers/nrf52
 
@@ -315,7 +315,7 @@ OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
 
 export OUTPUT_FILENAME
 export FINAL_BIN_DIR
-BOOTLOADER_WITH_S132_NAME := $(OUTPUT_FILENAME)_$(BOOTLOADER_S132_SUFFIX)
+BOOTLOADER_WITH_SD_NAME := $(OUTPUT_FILENAME)_$(BOOTLOADER_SD_SUFFIX)
 
 # Target for Feather nrf52 board
 feather52: OUTPUT_FILENAME := feather52_bootloader
@@ -358,21 +358,21 @@ finalize: genhex genbin genpkg echosize
 
 ## Create binary .hex file from the .out file
 genhex: 
-	@echo Preparing: $(OUTPUT_FILENAME).hex $(BOOTLOADER_WITH_S132_NAME).hex
+	@echo Preparing: $(OUTPUT_FILENAME).hex $(BOOTLOADER_WITH_SD_NAME).hex
 	$(NO_ECHO)$(OBJCOPY) -O ihex $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex
-	@mergehex -q -m $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex $(SD_HEX) -o $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
+	@mergehex -q -m $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex $(SD_HEX) -o $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_SD_NAME).hex
 	@mkdir -p $(FINAL_BIN_DIR)
-	@cp $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex $(FINAL_BIN_DIR)/
+	@cp $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_SD_NAME).hex $(FINAL_BIN_DIR)/
 
 ## Create .bin file
 genbin:
-	@echo Preparing: $(BOOTLOADER_WITH_S132_NAME).bin
-	$(NO_ECHO)$(OBJCOPY) -j .text -j .data -j .bss -O binary $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(FINAL_BIN_DIR)/$(BOOTLOADER_WITH_S132_NAME).bin
+	@echo Preparing: $(BOOTLOADER_WITH_SD_NAME).bin
+	$(NO_ECHO)$(OBJCOPY) -j .text -j .data -j .bss -O binary $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out $(FINAL_BIN_DIR)/$(BOOTLOADER_WITH_SD_NAME).bin
 
 ## Create pkg file for bootloader only and bootloader+SD combo to use with DFU
 genpkg:
-	@echo Preparing: $(BOOTLOADER_WITH_S132_NAME).zip
-	@$(NRFUTIL) dfu genpkg --dev-type 0x0052 --dev-revision 0xADAF --bootloader $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex --softdevice $(SD_HEX) $(FINAL_BIN_DIR)/$(BOOTLOADER_WITH_S132_NAME).zip 
+	@echo Preparing: $(BOOTLOADER_WITH_SD_NAME).zip
+	@$(NRFUTIL) dfu genpkg --dev-type 0x0052 --dev-revision 0xADAF --bootloader $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).hex --softdevice $(SD_HEX) $(FINAL_BIN_DIR)/$(BOOTLOADER_WITH_SD_NAME).zip 
 
 echosize:
 	-@echo ''
@@ -382,12 +382,16 @@ echosize:
 clean:
 	@$(RM) $(BUILD_DIRECTORIES)
 
-flash_feather52: BOOTLOADER_WITH_S132_NAME := feather52_bootloader_$(BOOTLOADER_S132_SUFFIX)
+flash_feather52: BOOTLOADER_WITH_SD_NAME := feather52_bootloader_$(BOOTLOADER_SD_SUFFIX)
 flash_feather52: feather52
-	@echo Flashing: $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
-	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex -f nrf52 --chiperase --reset
+	@echo Flashing: $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_SD_NAME).hex
+	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_SD_NAME).hex -f nrf52 --chiperase --reset
 
-flash_metro52: BOOTLOADER_WITH_S132_NAME := metro52_bootloader_$(BOOTLOADER_S132_SUFFIX)
+flash_metro52: BOOTLOADER_WITH_SD_NAME := metro52_bootloader_$(BOOTLOADER_SD_SUFFIX)
 flash_metro52: metro52
-	@echo Flashing: $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex
-	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_S132_NAME).hex -f nrf52 --chiperase --reset	
+	@echo Flashing: $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_SD_NAME).hex
+	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_SD_NAME).hex -f nrf52 --chiperase --reset
+	
+flash_sd:
+	@echo Flashing: $(SD_HEX)
+	nrfjprog --program $(SD_HEX) -f nrf52 --chiperase --reset

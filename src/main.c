@@ -32,14 +32,15 @@
 #include <string.h>
 #include <stddef.h>
 
+#include "nordic_common.h"
+#include "sdk_common.h"
 #include "dfu_transport.h"
 #include "bootloader.h"
 #include "bootloader_util.h"
-#include "nordic_common.h"
-#include "sdk_common.h"
 
 #include "nrf.h"
 #include "nrf_soc.h"
+#include "nrf_nvic.h"
 #include "app_error.h"
 #include "nrf_gpio.h"
 #include "ble.h"
@@ -49,12 +50,6 @@
 #include "app_timer_appsh.h"
 #include "nrf_error.h"
 #include "boards.h"
-
-#include "softdevice_handler_appsh.h"
-//#include "nrf_sdh.h"
-//#include "nrf_sdh_ble.h"
-//#include "nrf_sdh_soc.h"
-
 
 #include "pstorage_platform.h"
 #include "nrf_mbr.h"
@@ -97,12 +92,15 @@
 #define arrcount(_arr)                      ( sizeof(_arr) / sizeof(_arr[0]) )
 
 
+#ifdef SOFTDEVICE_PRESENT
+/* Global nvic state instance, required by nrf_nvic.h */
+nrf_nvic_state_t nrf_nvic_state;
+#endif
+
 // These value must be the same with one in dfu_transport_ble.c
 #define BLEGAP_EVENT_LENGTH             6
 #define BLEGATT_ATT_MTU_MAX             247
 enum { BLE_CONN_CFG_HIGH_BANDWIDTH = 1 };
-
-
 
 // Adafruit for factory reset
 #define APPDATA_ADDR_START                  (BOOTLOADER_REGION_START-DFU_APP_DATA_RESERVED)
@@ -121,11 +119,6 @@ APP_TIMER_DEF( blinky_timer_id );
 bool _ota_update = false;
 
 bool is_ota(void) { return _ota_update; }
-
-void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
-{
-    app_error_handler(0xDEADBEEF, line_num, p_file_name);
-}
 
 static void button_pin_init(uint32_t pin)
 {
@@ -223,19 +216,6 @@ void blinky_ota_disconneted(void)
 }
 
 
-/**@brief Function for dispatching a BLE stack event to all modules with a BLE stack event handler.
- *
- * @details This function is called from the scheduler in the main loop after a BLE stack
- *          event has been received.
- *
- * @param[in]   p_ble_evt   Bluetooth stack event.
- */
-static void sys_evt_dispatch(uint32_t event)
-{
-  pstorage_sys_event_handler(event);
-}
-
-
 /**@brief Function for initializing the BLE stack.
  *
  * @details Initializes the SoftDevice and the BLE event interrupt.
@@ -247,14 +227,6 @@ static void sys_evt_dispatch(uint32_t event)
 static uint32_t ble_stack_init(bool init_softdevice)
 {
   uint32_t         err_code;
-  nrf_clock_lf_cfg_t clock_lf_cfg =
-  {
-      .source       = NRF_CLOCK_LF_SRC_RC,
-      .rc_ctiv      = 16,
-      .rc_temp_ctiv = 2,
-      .accuracy     = NRF_CLOCK_LF_ACCURACY_20_PPM
-  };
-
   if (init_softdevice)
   {
     sd_mbr_command_t com = { .command = SD_MBR_COMMAND_INIT_SD };
@@ -265,8 +237,25 @@ static uint32_t ble_stack_init(bool init_softdevice)
   err_code = sd_softdevice_vector_table_base_set(BOOTLOADER_REGION_START);
   APP_ERROR_CHECK(err_code);
 
-  // equivalent to nrf_sdh_enable_request()
-  SOFTDEVICE_HANDLER_APPSH_INIT(&clock_lf_cfg, true);
+  // Enable Softdevice
+  nrf_clock_lf_cfg_t clock_cfg =
+  {
+#if 1
+      .source       = NRF_CLOCK_LF_SRC_RC,
+      .rc_ctiv      = 16,
+      .rc_temp_ctiv = 2,
+      .accuracy     = NRF_CLOCK_LF_ACCURACY_20_PPM
+#else
+      // need to select source first
+      .source       = NRF_CLOCK_LF_SRC_XTAL,
+      .rc_ctiv      = 0,
+      .rc_temp_ctiv = 0,
+      .accuracy     = NRF_CLOCK_LF_ACCURACY_20_PPM
+#endif
+  };
+
+  APP_ERROR_CHECK( sd_softdevice_enable(&clock_cfg, app_error_fault_handler) );
+  sd_nvic_EnableIRQ(SD_EVT_IRQn);
 
   /*------------- Configure BLE params  -------------*/
   extern uint32_t  __data_start__[]; // defined in linker
@@ -306,9 +295,6 @@ static uint32_t ble_stack_init(bool init_softdevice)
   err_code = sd_ble_enable(&ram_start);
   VERIFY_SUCCESS(err_code);
 
-  err_code = softdevice_sys_evt_handler_set(sys_evt_dispatch);
-  VERIFY_SUCCESS(err_code);
-
   return err_code;
 }
 
@@ -343,11 +329,8 @@ int main(void)
   // start bootloader either serial or ble
   bool dfu_start = _ota_update || (NRF_POWER->GPREGRET == BOOTLOADER_DFU_SERIAL_MAGIC);
 
-  if (dfu_start)
-  {
-    // Clear GPREGRET if it is our values
-    NRF_POWER->GPREGRET = 0;
-  }
+  // Clear GPREGRET if it is our values
+  if (dfu_start) NRF_POWER->GPREGRET = 0;
 
   // Save bootloader version to pre-defined register, retrieved by application
   BOOTLOADER_VERSION_REGISTER = (BOOTLOADER_VERSION);
@@ -358,8 +341,7 @@ int main(void)
   APP_ERROR_CHECK_BOOL(NRF_FICR->CODEPAGESIZE == CODE_PAGE_SIZE);
 
   /* Initialize GPIOs
-   * For metro52 LED_BLUE is muxed with FRESET
-   */
+   * For metro52 LED_BLUE is muxed with FRESET */
   button_pin_init(BOOTLOADER_BUTTON);
   button_pin_init(FRESET_BUTTON);
   nrf_delay_us(100); // wait for the pin state is stable
@@ -417,12 +399,11 @@ int main(void)
   {
     /* Adafruit Modification
      * Even DFU is not active, we still force an 1000 ms dfu serial mode when startup
-     * to support auto programming from Arduino IDE
-     */
+     * to support auto programming from Arduino IDE */
     (void) bootloader_dfu_start(false, BOOTLOADER_STARTUP_DFU_INTERVAL);
   }
 
-  // Adafruit Factory reset
+  /*------------- Adafruit Factory reset -------------*/
 #ifdef BOARD_METRO52
   button_pin_init(FRESET_BUTTON);
   nrf_delay_us(100); // wait for the pin state is stable
@@ -439,10 +420,21 @@ int main(void)
     adafruit_factory_reset();
   }
 
+  /*------------- Stop timer and jump to application -------------*/
   app_timer_stop(blinky_timer_id);
+
+  led_off(LED_BLUE);
+  led_off(LED_RED);
 
   if (bootloader_app_is_valid(DFU_BANK_0_REGION_START) && !bootloader_dfu_sd_in_progress())
   {
+    // Stop RTC1
+    NVIC_DisableIRQ(RTC1_IRQn);
+    NRF_RTC1->EVTENCLR    = RTC_EVTEN_COMPARE0_Msk;
+    NRF_RTC1->INTENCLR    = RTC_INTENSET_COMPARE0_Msk;
+    NRF_RTC1->TASKS_STOP  = 1;
+    NRF_RTC1->TASKS_CLEAR = 1;
+
     // Select a bank region to use as application region.
     // @note: Only applications running from DFU_BANK_0_REGION_START is supported.
     bootloader_app_start(DFU_BANK_0_REGION_START);
@@ -451,6 +443,10 @@ int main(void)
   NVIC_SystemReset();
 }
 
+
+/*------------------------------------------------------------------*/
+/* FACTORY RESET
+ *------------------------------------------------------------------*/
 /**
  * Pstorage callback, fired after erased  Application Data
  */
@@ -514,3 +510,74 @@ void adafruit_factory_reset(void)
   blinky_fast_set(false);
   led_off(LED_BLUE);
 }
+
+//--------------------------------------------------------------------+
+// Error Handler
+//--------------------------------------------------------------------+
+void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
+{
+  //verify_breakpoint();
+  NVIC_SystemReset();
+}
+
+void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
+{
+  app_error_handler(0xDEADBEEF, line_num, p_file_name);
+}
+
+/*------------------------------------------------------------------*/
+/* SoftDevice Event handler
+ *------------------------------------------------------------------*/
+uint32_t proc_ble(void)
+{
+  __ALIGN(4) uint8_t ev_buf[ BLE_EVT_LEN_MAX(BLEGATT_ATT_MTU_MAX) ];
+  uint16_t ev_len = BLE_EVT_LEN_MAX(BLEGATT_ATT_MTU_MAX);
+
+  // Get BLE Event
+  uint32_t err = sd_ble_evt_get(ev_buf, &ev_len);
+
+  // Handle valid event, ignore error
+  if( NRF_SUCCESS == err)
+  {
+    // from dfu_transport_ble
+    extern void ble_evt_dispatch(ble_evt_t * p_ble_evt);
+
+    ble_evt_t* evt = (ble_evt_t*) ev_buf;
+    ble_evt_dispatch(evt);
+  }
+
+  return err;
+}
+
+uint32_t proc_soc(void)
+{
+  uint32_t soc_evt;
+  uint32_t err = sd_evt_get(&soc_evt);
+
+  if (NRF_SUCCESS == err)
+  {
+    pstorage_sys_event_handler(soc_evt);
+  }
+
+  return err;
+}
+
+void ada_sd_task(void* evt_data, uint16_t evt_size)
+{
+  (void) evt_data;
+  (void) evt_size;
+
+  // process BLE and SOC until there is no more events
+  while( (NRF_ERROR_NOT_FOUND != proc_ble()) || (NRF_ERROR_NOT_FOUND != proc_soc()) )
+  {
+
+  }
+}
+
+void SD_EVT_IRQHandler(void)
+{
+  // Use App Scheduler to defer handling code in non-isr context
+  app_sched_event_put(NULL, 0, ada_sd_task);
+}
+
+
