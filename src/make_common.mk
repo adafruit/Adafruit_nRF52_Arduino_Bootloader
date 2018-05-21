@@ -35,9 +35,6 @@ endif
 BOOTLOADER_SD_SUFFIX = $(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)_$(SD_NAME)_$(BANKMODE)
 FINAL_BIN_DIR := ../../bin
 
-TEMPLATE_PATH = $(SDK_PATH)/toolchain/gcc
-
-
 #******************************************************************************
 # Tool configure
 #******************************************************************************
@@ -220,7 +217,7 @@ CFLAGS += -DNRF52_PAN_63
 
 # keep every function in separate section. This will allow linker to dump unused functions
 LDFLAGS += -Xlinker -Map=$(LISTING_DIRECTORY)/$(OUTPUT_FILENAME).map
-LDFLAGS += -mthumb -mabi=aapcs -L $(TEMPLATE_PATH) -T$(LINKER_SCRIPT)
+LDFLAGS += -mthumb -mabi=aapcs -L$(SRC_PATH)/ -T$(LINKER_SCRIPT)
 LDFLAGS += -mcpu=cortex-m4
 LDFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
 
