@@ -706,7 +706,7 @@ static void advertising_start(void)
                 m_adv_params.properties.type     = BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED;
                 m_adv_params.filter_policy       = BLE_GAP_ADV_FP_FILTER_CONNREQ;
                 m_adv_params.interval            = APP_ADV_INTERVAL;
-                m_adv_params.duration            = APP_ADV_TIMEOUT_IN_SECONDS;
+                m_adv_params.duration            = APP_ADV_TIMEOUT_IN_SECONDS*100;
             }
         }
         else
@@ -716,7 +716,7 @@ static void advertising_start(void)
             m_adv_params.p_peer_addr         = NULL;
             m_adv_params.filter_policy       = BLE_GAP_ADV_FP_ANY;
             m_adv_params.interval            = APP_ADV_INTERVAL;
-            m_adv_params.duration            = APP_ADV_TIMEOUT_IN_SECONDS;
+            m_adv_params.duration            = APP_ADV_TIMEOUT_IN_SECONDS*100;
         }
 
         err_code = sd_ble_gap_adv_set_configure(&_adv_handle, &gap_adv, &m_adv_params);
@@ -1095,8 +1095,8 @@ uint32_t dfu_transport_ble_update_start(void)
     services_init();
     sec_params_init();
 
-    sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_ADV, 0, 4); // maximum power
     advertising_start();
+    sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_ADV, _adv_handle, 4); // maximum power
 
     return NRF_SUCCESS;
 }
