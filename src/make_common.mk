@@ -10,19 +10,21 @@
 # - SD_VERSION : e.g 5.1.0
 # - SD_HEX     : path to bootloader hex binary
 #******************************************************************************
-VERSION_MAJOR    = 5
-VERSION_MINOR    = 1
+VERSION_MAJOR    = 6
+VERSION_MINOR    = 0
 VERSION_REVISION = 0
 
 SDK_PATH         = ../../lib/sdk11/components
 SRC_PATH         = ..
 
 SD_NAME          = s132
-SD_VERSION       = 5.1.0
+SD_VERSION       = 6.0.0
+
+MK_DIS_FIRMWARE  = "$(subst s,S,$(SD_NAME)) $(SD_VERSION), $(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)"
 
 SD_PATH          = ../../lib/softdevice/$(SD_NAME)/$(SD_VERSION)
 SD_HEX           = $(SD_PATH)/hex/$(SD_NAME)_nrf52_$(SD_VERSION)_softdevice.hex
-LINKER_SCRIPT    = $(SRC_PATH)/$(SD_NAME)_$(SD_VERSION).ld
+LINKER_SCRIPT    = $(SRC_PATH)/bootloader_$(SD_NAME).ld
 
 ifeq ($(VERSION_SINGLEBANK),1)
 BANKMODE = single
@@ -103,8 +105,6 @@ C_SOURCE_FILES += $(SDK_PATH)/drivers_nrf/delay/nrf_delay.c
 C_SOURCE_FILES += $(SDK_PATH)/drivers_nrf/common/nrf_drv_common.c
 C_SOURCE_FILES += $(SDK_PATH)/drivers_nrf/uart/nrf_drv_uart.c
 
-C_SOURCE_FILES += $(SDK_PATH)/ble/common/ble_advdata.c
-C_SOURCE_FILES += $(SDK_PATH)/ble/common/ble_conn_params.c
 C_SOURCE_FILES += $(SDK_PATH)/ble/common/ble_srv_common.c
 C_SOURCE_FILES += $(SDK_PATH)/ble/ble_services/ble_dfu/ble_dfu.c
 C_SOURCE_FILES += $(SDK_PATH)/ble/ble_services/ble_dis/ble_dis.c
@@ -140,8 +140,6 @@ INC_PATHS += -I$(SDK_PATH)/drivers_nrf/config
 INC_PATHS += -I$(SDK_PATH)/drivers_nrf/delay
 INC_PATHS += -I$(SDK_PATH)/drivers_nrf/uart
 
-#INC_PATHS += -I../../lib/softdevice/common
-#INC_PATHS += -I../../lib/softdevice/common/softdevice_handler/
 INC_PATHS += -I$(SD_PATH)/headers
 INC_PATHS += -I$(SD_PATH)/headers/nrf52
 
@@ -184,6 +182,7 @@ CFLAGS += -DBSP_DEFINES_ONLY
 CFLAGS += -DSOFTDEVICE_PRESENT
 CFLAGS += -DSWI_DISABLE0
 CFLAGS += -DFLOAT_ABI_HARD
+CFLAGS += -DMK_DIS_FIRMWARE='$(MK_DIS_FIRMWARE)'
 
 CFLAGS += -DDFU_APP_DATA_RESERVED=7*4096
 

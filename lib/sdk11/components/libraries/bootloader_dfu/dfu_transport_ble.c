@@ -20,7 +20,7 @@
 #include "nrf_gpio.h"
 #include "app_util.h"
 #include "app_error.h"
-#include "ble_advdata.h"
+
 #include "ble_l2cap.h"
 #include "ble_gap.h"
 #include "ble_gatt.h"
@@ -28,7 +28,6 @@
 #include "ble_dfu.h"
 #include "ble_dis.h"
 #include "app_timer.h"
-#include "ble_conn_params.h"
 #include "hci_mem_pool.h"
 #include "bootloader.h"
 #include "dfu_ble_svc_internal.h"
@@ -43,18 +42,12 @@ enum { BLE_CONN_CFG_HIGH_BANDWIDTH = 1 };
 #define DFU_REV_MAJOR                        0x00                                                    /** DFU Major revision number to be exposed. */
 #define DFU_REV_MINOR                        0x08                                                    /** DFU Minor revision number to be exposed. */
 #define DFU_REVISION                         ((DFU_REV_MAJOR << 8) | DFU_REV_MINOR)                  /** DFU Revision number to be exposed. Combined of major and minor versions. */
-//#define ADVERTISING_LED_PIN_NO               17                                               /**< Is on when device is advertising. */
-//#define CONNECTED_LED_PIN_NO                 19                                               /**< Is on when device has connected. */
 #define DFU_SERVICE_HANDLE                   0x000C                                                  /**< Handle of DFU service when DFU service is first service initialized. */
 #define BLE_HANDLE_MAX                       0xFFFF                                                  /**< Max handle value is BLE. */
 
 #define DEVICE_NAME                          "AdaDFU" // limit of 8 chars                                                /**< Name of device. Will be included in the advertising data. */
 #define DIS_MANUFACTURER                     "Adafruit Industries"
-// DIS_MODEL is defined in boards.h
-
-// TODO Update when upgrade bootloader
-#define DIS_FIRMWARE                         "S132 5.1.0, 5.1.0"
-
+// DIS_MODEL is defined in boards.h, DIS_FIRMWARE is defined by makefile
 
 #define MIN_CONN_INTERVAL                    (uint16_t)(MSEC_TO_UNITS(10, UNIT_1_25_MS))             /**< Minimum acceptable connection interval (11.25 milliseconds). */
 #define MAX_CONN_INTERVAL                    (uint16_t)(MSEC_TO_UNITS(30, UNIT_1_25_MS))             /**< Maximum acceptable connection interval (15 milliseconds). */
@@ -126,6 +119,8 @@ static ble_gap_addr_t      const * m_whitelist[1];                              
 static ble_gap_id_key_t    const * m_gap_ids[1];
 
 // Adafruit
+static uint8_t _adv_handle = BLE_GAP_ADV_SET_HANDLE_NOT_SET;
+
 extern void blinky_fast_set(bool isFast);
 extern void blinky_ota_connected(void);
 extern void blinky_ota_disconneted(void);
@@ -534,40 +529,6 @@ static void on_dfu_pkt_write(ble_dfu_t * p_dfu, ble_dfu_evt_t * p_evt)
     }
 }
 
-
-/**@brief     Function for handling a Connection Parameters error.
- *
- * @param[in] nrf_error Error code.
- */
-static void conn_params_error_handler(uint32_t nrf_error)
-{
-    APP_ERROR_HANDLER(nrf_error);
-}
-
-
-/**@brief Function for initializing the Connection Parameters module.
- */
-static void conn_params_init(void)
-{
-    uint32_t               err_code;
-    ble_conn_params_init_t cp_init;
-
-    memset(&cp_init, 0, sizeof(cp_init));
-
-    cp_init.p_conn_params                  = NULL;
-    cp_init.first_conn_params_update_delay = FIRST_CONN_PARAMS_UPDATE_DELAY;
-    cp_init.next_conn_params_update_delay  = NEXT_CONN_PARAMS_UPDATE_DELAY;
-    cp_init.max_conn_params_update_count   = MAX_CONN_PARAMS_UPDATE_COUNT;
-    cp_init.start_on_notify_cccd_handle    = BLE_GATT_HANDLE_INVALID;
-    cp_init.disconnect_on_fail             = false;
-    cp_init.evt_handler                    = NULL;
-    cp_init.error_handler                  = conn_params_error_handler;
-
-    err_code = ble_conn_params_init(&cp_init);
-    APP_ERROR_CHECK(err_code);
-}
-
-
 /**@brief     Function for the Device Firmware Update Service event handler.
  *
  * @details   This function will be called for all Device Firmware Update Service events which
@@ -664,31 +625,35 @@ static void on_dfu_evt(ble_dfu_t * p_dfu, ble_dfu_evt_t * p_evt)
 }
 
 
+static void advertising_add(ble_data_t* adv_data, uint8_t type, const void* field, uint8_t len)
+{
+  if ( adv_data->len + len + 2 > BLE_GAP_ADV_SET_DATA_SIZE_MAX ) return;
+
+  uint8_t* adv_buf = adv_data->p_data + adv_data->len;
+
+  // len (1+data), type, data
+  *adv_buf++ = (len+1);
+  *adv_buf++ = type;
+  memcpy(adv_buf, field, len);
+
+  adv_data->len += (len + 2);
+}
+
 /**@brief     Function for the Advertising functionality initialization.
  *
  * @details   Encodes the required advertising data and passes it to the stack.
  *            Also builds a structure to be passed to the stack when starting advertising.
  */
-static void advertising_init(uint8_t adv_flags)
+static void advertising_init(ble_data_t* adv_data, uint8_t adv_flags)
 {
-    uint32_t      err_code;
-    ble_advdata_t advdata;
-    ble_uuid_t    service_uuid;
+  uint8_t len;
+  uint8_t uuid128[16];
+  ble_uuid_t    service_uuid = { .uuid = BLE_DFU_SERVICE_UUID, .type = m_dfu.uuid_type };
+  sd_ble_uuid_encode(&service_uuid, &len, uuid128);
 
-    service_uuid.type = m_dfu.uuid_type;
-    service_uuid.uuid = BLE_DFU_SERVICE_UUID;
-
-    // Build and set advertising data.
-    memset(&advdata, 0, sizeof(advdata));
-
-    advdata.name_type                     = BLE_ADVDATA_FULL_NAME;
-    advdata.include_appearance            = false;
-    advdata.flags                         = adv_flags;
-    advdata.uuids_more_available.uuid_cnt = 1;
-    advdata.uuids_more_available.p_uuids  = &service_uuid;
-
-    err_code = ble_advdata_set(&advdata, NULL);
-    APP_ERROR_CHECK(err_code);
+  advertising_add(adv_data, BLE_GAP_AD_TYPE_FLAGS, &adv_flags, 1);
+  advertising_add(adv_data, BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME, DEVICE_NAME, strlen(DEVICE_NAME));
+  advertising_add(adv_data, BLE_GAP_AD_TYPE_128BIT_SERVICE_UUID_MORE_AVAILABLE, uuid128, 16);
 }
 
 
@@ -700,6 +665,12 @@ static void advertising_start(void)
     {
         uint32_t err_code;
 
+        uint8_t adv_buf[BLE_GAP_ADV_SET_DATA_SIZE_MAX];
+        ble_gap_adv_data_t gap_adv =
+        {
+            .adv_data = { .p_data = adv_buf, .len = 0}
+        };
+
         // Initialize advertising parameters (used when starting advertising).
         memset(&m_adv_params, 0, sizeof(m_adv_params));
 
@@ -709,12 +680,12 @@ static void advertising_start(void)
 
             if (memcmp(m_ble_peer_data.irk.irk, empty_irk.irk, sizeof(empty_irk.irk)) == 0)
             {
-                advertising_init(BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE);
-                m_adv_params.type        = BLE_GAP_ADV_TYPE_ADV_DIRECT_IND;
-                m_adv_params.p_peer_addr = &m_ble_peer_data.addr;
-                m_adv_params.fp          = BLE_GAP_ADV_FP_ANY;
-                m_adv_params.interval    = 0;
-                m_adv_params.timeout     = 0;
+                advertising_init(&gap_adv.adv_data, BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE);
+                m_adv_params.properties.type     = BLE_GAP_ADV_TYPE_CONNECTABLE_NONSCANNABLE_DIRECTED_HIGH_DUTY_CYCLE;
+                m_adv_params.p_peer_addr         = &m_ble_peer_data.addr;
+                m_adv_params.filter_policy       = BLE_GAP_ADV_FP_ANY;
+                m_adv_params.interval            = 0;
+                m_adv_params.duration            = 0;
             }
             else
             {
@@ -731,25 +702,27 @@ static void advertising_start(void)
                 err_code = sd_ble_gap_device_identities_set(m_gap_ids, NULL, 1);
                 APP_ERROR_CHECK(err_code);
 
-                advertising_init(BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED);
-                m_adv_params.type        = BLE_GAP_ADV_TYPE_ADV_IND;
-                m_adv_params.fp          = BLE_GAP_ADV_FP_FILTER_CONNREQ;
-                m_adv_params.interval    = APP_ADV_INTERVAL;
-                m_adv_params.timeout     = APP_ADV_TIMEOUT_IN_SECONDS;
-
+                advertising_init(&gap_adv.adv_data, BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED);
+                m_adv_params.properties.type     = BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED;
+                m_adv_params.filter_policy       = BLE_GAP_ADV_FP_FILTER_CONNREQ;
+                m_adv_params.interval            = APP_ADV_INTERVAL;
+                m_adv_params.duration            = APP_ADV_TIMEOUT_IN_SECONDS;
             }
         }
         else
         {
-            advertising_init(BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE);
-            m_adv_params.type        = BLE_GAP_ADV_TYPE_ADV_IND;
-            m_adv_params.p_peer_addr = NULL;
-            m_adv_params.fp          = BLE_GAP_ADV_FP_ANY;
-            m_adv_params.interval    = APP_ADV_INTERVAL;
-            m_adv_params.timeout     = APP_ADV_TIMEOUT_IN_SECONDS;
+            advertising_init(&gap_adv.adv_data, BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE);
+            m_adv_params.properties.type     = BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED;
+            m_adv_params.p_peer_addr         = NULL;
+            m_adv_params.filter_policy       = BLE_GAP_ADV_FP_ANY;
+            m_adv_params.interval            = APP_ADV_INTERVAL;
+            m_adv_params.duration            = APP_ADV_TIMEOUT_IN_SECONDS;
         }
 
-        err_code = sd_ble_gap_adv_start(&m_adv_params, BLE_CONN_CFG_HIGH_BANDWIDTH);
+        err_code = sd_ble_gap_adv_set_configure(&_adv_handle, &gap_adv, &m_adv_params);
+        APP_ERROR_CHECK(err_code);
+
+        err_code = sd_ble_gap_adv_start(_adv_handle, BLE_CONN_CFG_HIGH_BANDWIDTH);
         APP_ERROR_CHECK(err_code);
 
 //        led_on(ADVERTISING_LED_PIN_NO);
@@ -767,7 +740,7 @@ static void advertising_stop(void)
     {
         uint32_t err_code;
 
-        err_code = sd_ble_gap_adv_stop();
+        err_code = sd_ble_gap_adv_stop(_adv_handle);
         APP_ERROR_CHECK(err_code);
 
 //        led_off(ADVERTISING_LED_PIN_NO);
@@ -858,8 +831,8 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
             }
             break;
 
-        case BLE_GAP_EVT_TIMEOUT:
-            if (p_ble_evt->evt.gap_evt.params.timeout.src == BLE_GAP_TIMEOUT_SRC_ADVERTISING)
+        case BLE_GAP_EVT_ADV_SET_TERMINATED:
+            if (p_ble_evt->evt.gap_evt.params.adv_set_terminated.reason == BLE_GAP_EVT_ADV_SET_TERMINATED_REASON_TIMEOUT)
             {
                 m_is_advertising = false;
                 m_direct_adv_cnt--;
@@ -967,7 +940,6 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
  */
 /*static*/ void ble_evt_dispatch(ble_evt_t * p_ble_evt)
 {
-    ble_conn_params_on_ble_evt(p_ble_evt);
     ble_dfu_on_ble_evt(&m_dfu, p_ble_evt);
     on_ble_evt(p_ble_evt);
 }
@@ -1059,7 +1031,7 @@ static void services_init(void)
 
     ascii_to_utf8(&dis_init.manufact_name_str, DIS_MANUFACTURER);
     ascii_to_utf8(&dis_init.model_num_str, DIS_MODEL);
-    ascii_to_utf8(&dis_init.fw_rev_str, DIS_FIRMWARE);
+    ascii_to_utf8(&dis_init.fw_rev_str, MK_DIS_FIRMWARE);
 
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&dis_init.dis_attr_md.read_perm);
     BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&dis_init.dis_attr_md.write_perm);
@@ -1121,10 +1093,9 @@ uint32_t dfu_transport_ble_update_start(void)
 
     gap_params_init();
     services_init();
-    conn_params_init();
     sec_params_init();
 
-    sd_ble_gap_tx_power_set(4); // maximum power
+    sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_ADV, 0, 4); // maximum power
     advertising_start();
 
     return NRF_SUCCESS;
@@ -1148,9 +1119,6 @@ uint32_t dfu_transport_ble_close()
         // If not connected, then the device will be advertising. Hence stop the advertising.
         advertising_stop();
     }
-
-    err_code = ble_conn_params_stop();
-    APP_ERROR_CHECK(err_code);
 
     return NRF_SUCCESS;
 }
