@@ -115,10 +115,6 @@ C_SOURCE_FILES += $(SDK_PATH)/ble/ble_services/ble_dis/ble_dis.c
 C_SOURCE_FILES += $(SDK_PATH)/drivers_nrf/pstorage/pstorage_raw.c
 C_SOURCE_FILES += $(SDK_PATH)/toolchain/system_nrf52.c
 
-#C_SOURCE_FILES += ../../lib/softdevice/common/softdevice_handler/softdevice_handler.c
-#C_SOURCE_FILES += ../../lib/softdevice/common/softdevice_handler/softdevice_handler_appsh.c
-
-
 
 #******************************************************************************
 # Assembly Files
@@ -147,8 +143,8 @@ INC_PATHS += -I$(SDK_PATH)/drivers_nrf/config
 INC_PATHS += -I$(SDK_PATH)/drivers_nrf/delay
 INC_PATHS += -I$(SDK_PATH)/drivers_nrf/uart
 
-INC_PATHS += -I../../lib/softdevice/common
-INC_PATHS += -I../../lib/softdevice/common/softdevice_handler/
+#INC_PATHS += -I../../lib/softdevice/common
+#INC_PATHS += -I../../lib/softdevice/common/softdevice_handler/
 INC_PATHS += -I$(SD_PATH)/headers
 INC_PATHS += -I$(SD_PATH)/headers/nrf52
 

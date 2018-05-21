@@ -20,8 +20,6 @@
 #include "nrf_gpio.h"
 #include "app_util.h"
 #include "app_error.h"
-#include "softdevice_handler.h"
-#include "ble_stack_handler_types.h"
 #include "ble_advdata.h"
 #include "ble_l2cap.h"
 #include "ble_gap.h"
