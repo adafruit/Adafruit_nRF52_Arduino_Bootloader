@@ -1,0 +1,285 @@
+<!DOCTYPE CrossStudio_Project_File>
+<solution Name="nrf52832_bootloader" target="8" version="2">
+  <project Name="nrf52832_bootloader">
+    <configuration
+      Name="Common"
+      Placement="Flash"
+      Target="nRF52832_xxAA"
+      arm_architecture="v7EM"
+      arm_core_type="Cortex-M4"
+      arm_endian="Little"
+      arm_fp_abi="Hard"
+      arm_fpu_type="FPv4-SP-D16"
+      arm_interwork="No"
+      arm_linker_heap_size="256"
+      arm_linker_process_stack_size="0"
+      arm_linker_stack_size="256"
+      arm_simulator_memory_simulation_parameter="ROM;0x00000000;0x00080000;RAM;0x20000000;0x00010000"
+      arm_target_debug_interface_type="ADIv5"
+      arm_target_device_name="nRF52832_xxAA"
+      arm_target_interface_type="SWD"
+      c_preprocessor_definitions="NRF52832_XXAA;NRF52;__nRF_FAMILY;ARM_MATH_CM4;FLASH_PLACEMENT=1;NO_VTOR_CONFIG;BOARD_FEATHER52;BOOTLOADER_VERSION=0x06000001;MK_DIS_FIRMWARE=&quot;S132 6.0.0, 6.0.0&quot;;S132;CONFIG_GPIO_AS_PINRESET;BLE_STACK_SUPPORT_REQD;SWI_DISABLE0;SOFTDEVICE_PRESENT;FLOAT_ABI_HARD"
+      c_user_include_directories="../;$(SdDir)/headers;$(SdDir)/headers/nrf52;$(Sdk11Dir)/drivers_nrf/pstorage;$(Sdk11Dir)/ble/common/;$(Sdk11Dir)/ble/ble_services/ble_dfu;$(Sdk11Dir)/ble/ble_services/ble_dis;$(Sdk11Dir)/libraries/bootloader_dfu;$(Sdk11Dir)/libraries/bootloader_dfu/hci_transport;$(Sdk11Dir)/libraries/util;$(Sdk11Dir)/toolchain/cmsis/include;$(Sdk11Dir)/device;$(Sdk11Dir)/toolchain;$(Sdk11Dir)/drivers_nrf/hal;$(Sdk11Dir)/drivers_nrf/uart;$(Sdk11Dir)/drivers_nrf/common;$(Sdk11Dir)/drivers_nrf/delay;$(Sdk11Dir)/drivers_nrf/config;$(Sdk11Dir)/libraries/util;$(Sdk11Dir)/libraries/scheduler;$(Sdk11Dir)/libraries/crc16;$(Sdk11Dir)/libraries/util;$(Sdk11Dir)/libraries/hci/config;$(Sdk11Dir)/libraries/uart;$(Sdk11Dir)/libraries/hci;$(Sdk11Dir)/libraries/fifo;$(Sdk11Dir)/libraries/timer"
+      debug_register_definition_file="$(ProjectDir)/nrf52_Registers.xml"
+      debug_target_connection="J-Link"
+      gcc_entry_point="Reset_Handler"
+      linker_memory_map_file="$(ProjectDir)/nRF52832_xxAA_MemoryMap.xml"
+      linker_section_placement_file="$(ProjectDir)/flash_placement.xml"
+      macros="DeviceHeaderFile=$(PackagesDir)/nRF/CMSIS/Device/Include/nrf.h;DeviceLibraryIdentifier=M4lf;DeviceSystemFile=$(PackagesDir)/nRF/CMSIS/Device/Source/system_nrf52.c;DeviceVectorsFile=$(PackagesDir)/nRF/Source/ses_nrf52_Vectors.s;DeviceFamily=nRF;Target=nRF52832_xxAA;Placement=Flash;Sdk11Dir=../../lib/sdk11/components;SdDir=../../lib/softdevice/s132/6.0.0"
+      project_directory=""
+      project_type="Executable"
+      target_reset_script="Reset();"
+      target_script_file="$(ProjectDir)/nRF_Target.js"
+      target_trace_initialize_script="EnableTrace(&quot;$(TraceInterfaceType)&quot;)" />
+    <folder Name="RTT Files">
+      <file file_name="SEGGER_RTT.c" />
+      <file file_name="SEGGER_RTT.h" />
+      <file file_name="SEGGER_RTT_Conf.h" />
+      <file file_name="SEGGER_RTT_SES.c" />
+    </folder>
+    <folder Name="Script Files">
+      <file file_name="nRF_Target.js">
+        <configuration Name="Common" file_type="Reset Script" />
+      </file>
+    </folder>
+    <folder Name="src">
+      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc" />
+      <file file_name="../boards.h" />
+      <file file_name="../dfu_ble_svc.c" />
+      <file file_name="../feather52.h" />
+      <file file_name="../main.c" />
+      <file file_name="../metro52.h" />
+      <file file_name="../nrf_drv_config.h" />
+      <file file_name="../pstorage_platform.h" />
+      <file file_name="../sdk_config.h" />
+    </folder>
+    <folder Name="System Files">
+      <file file_name="thumb_crt0.s" />
+      <file file_name="ses_nRF_Startup.s" />
+      <file file_name="ses_nrf52_Vectors.s">
+        <configuration Name="Common" file_type="Assembly" />
+      </file>
+      <file file_name="nRF52832_xxAA_MemoryMap.xml" />
+      <file file_name="flash_placement.xml" />
+    </folder>
+    <folder Name="lib">
+      <folder Name="sdk11">
+        <folder Name="components">
+          <folder Name="ble">
+            <folder Name="ble_services">
+              <folder Name="ble_dfu">
+                <file file_name="../../lib/sdk11/components/ble/ble_services/ble_dfu/ble_dfu.c" />
+                <file file_name="../../lib/sdk11/components/ble/ble_services/ble_dfu/ble_dfu.h" />
+              </folder>
+              <folder Name="ble_dis">
+                <file file_name="../../lib/sdk11/components/ble/ble_services/ble_dis/ble_dis.c" />
+                <file file_name="../../lib/sdk11/components/ble/ble_services/ble_dis/ble_dis.h" />
+              </folder>
+            </folder>
+            <folder Name="common">
+              <file file_name="../../lib/sdk11/components/ble/common/ble_srv_common.c">
+                <configuration Name="Debug" build_exclude_from_build="Yes" />
+              </file>
+              <file file_name="../../lib/sdk11/components/ble/common/ble_srv_common.h" />
+            </folder>
+          </folder>
+          <folder Name="device">
+            <file file_name="../../lib/sdk11/components/device/compiler_abstraction.h" />
+            <file file_name="../../lib/sdk11/components/device/nrf.h" />
+            <file file_name="../../lib/sdk11/components/device/nrf51_to_nrf52.h" />
+            <file file_name="../../lib/sdk11/components/device/nrf52.h" />
+            <file file_name="../../lib/sdk11/components/device/nrf52_bitfields.h" />
+            <file file_name="../../lib/sdk11/components/device/nrf52_name_change.h" />
+          </folder>
+          <folder Name="drivers_nrf">
+            <folder
+              Name="common"
+              path="../../lib/sdk11/components/drivers_nrf/common" />
+            <folder Name="config">
+              <file file_name="../../lib/sdk11/components/drivers_nrf/config/nrf_drv_config.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/config/nrf_drv_config_validation.h" />
+            </folder>
+            <folder Name="delay">
+              <file file_name="../../lib/sdk11/components/drivers_nrf/delay/nrf_delay.c" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/delay/nrf_delay.h" />
+            </folder>
+            <folder Name="hal">
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_adc.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_clock.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_comp.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_ecb.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_egu.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_gpio.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_gpiote.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_i2s.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_lpcomp.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_nvmc.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_pdm.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_ppi.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_pwm.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_qdec.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_rng.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_rtc.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_saadc.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_spi.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_spim.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_spis.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_temp.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_timer.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_twi.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_twim.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_twis.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_uart.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_uarte.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/hal/nrf_wdt.h" />
+            </folder>
+            <folder Name="pstorage">
+              <file file_name="../../lib/sdk11/components/drivers_nrf/pstorage/pstorage.h" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/pstorage/pstorage_raw.c" />
+            </folder>
+            <folder Name="uart">
+              <file file_name="../../lib/sdk11/components/drivers_nrf/uart/nrf_drv_uart.c" />
+              <file file_name="../../lib/sdk11/components/drivers_nrf/uart/nrf_drv_uart.h" />
+            </folder>
+          </folder>
+          <folder Name="libraries">
+            <folder Name="bootloader_dfu">
+              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/bootloader.c" />
+              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/bootloader.h" />
+              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/bootloader_settings.c" />
+              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/bootloader_settings.h" />
+              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/bootloader_types.h" />
+              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/bootloader_util.c" />
+              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/bootloader_util.h" />
+              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu.h" />
+              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_bank_internal.h" />
+              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_ble_svc.h" />
+              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_ble_svc_internal.h" />
+              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_dual_bank.c">
+                <configuration
+                  Name="Debug Size++"
+                  build_exclude_from_build="Yes" />
+              </file>
+              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_init.h" />
+              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_init_template.c" />
+              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_single_bank.c" />
+              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_transport.h" />
+              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_transport_ble.c" />
+              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_transport_serial.c" />
+              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_types.h" />
+              <folder Name="ble_transport">
+                <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/ble_transport/hci_mem_pool_internal.h" />
+              </folder>
+              <folder Name="hci_transport">
+                <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/hci_transport/hci_mem_pool_internal.h" />
+                <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/hci_transport/hci_transport_config.h" />
+              </folder>
+            </folder>
+            <folder Name="crc16">
+              <file file_name="../../lib/sdk11/components/libraries/crc16/crc16.c" />
+              <file file_name="../../lib/sdk11/components/libraries/crc16/crc16.h" />
+            </folder>
+            <folder Name="fifo">
+              <file file_name="../../lib/sdk11/components/libraries/fifo/app_fifo.c" />
+              <file file_name="../../lib/sdk11/components/libraries/fifo/app_fifo.h" />
+            </folder>
+            <folder Name="hci">
+              <file file_name="../../lib/sdk11/components/libraries/hci/hci_mem_pool.c" />
+              <file file_name="../../lib/sdk11/components/libraries/hci/hci_mem_pool.h" />
+              <file file_name="../../lib/sdk11/components/libraries/hci/hci_slip.c" />
+              <file file_name="../../lib/sdk11/components/libraries/hci/hci_slip.h" />
+              <file file_name="../../lib/sdk11/components/libraries/hci/hci_transport.c" />
+              <file file_name="../../lib/sdk11/components/libraries/hci/hci_transport.h" />
+            </folder>
+            <folder Name="scheduler">
+              <file file_name="../../lib/sdk11/components/libraries/scheduler/app_scheduler.c" />
+              <file file_name="../../lib/sdk11/components/libraries/scheduler/app_scheduler.h" />
+            </folder>
+            <folder Name="slip">
+              <file file_name="../../lib/sdk11/components/libraries/slip/slip.c" />
+              <file file_name="../../lib/sdk11/components/libraries/slip/slip.h" />
+            </folder>
+            <folder Name="timer">
+              <file file_name="../../lib/sdk11/components/libraries/timer/app_timer.c" />
+              <file file_name="../../lib/sdk11/components/libraries/timer/app_timer.h" />
+              <file file_name="../../lib/sdk11/components/libraries/timer/app_timer_appsh.c" />
+              <file file_name="../../lib/sdk11/components/libraries/timer/app_timer_appsh.h" />
+            </folder>
+            <folder
+              Name="uart"
+              path="../../lib/sdk11/components/libraries/uart" />
+            <folder
+              Name="util"
+              path="../../lib/sdk11/components/libraries/util" />
+          </folder>
+          <folder Name="toolchain">
+            <file file_name="../../lib/sdk11/components/toolchain/system_nrf52.c" />
+            <file file_name="../../lib/sdk11/components/toolchain/system_nrf52.h" />
+            <folder Name="cmsis">
+              <folder Name="include">
+                <file file_name="../../lib/sdk11/components/toolchain/cmsis/include/arm_common_tables.h" />
+                <file file_name="../../lib/sdk11/components/toolchain/cmsis/include/arm_const_structs.h" />
+                <file file_name="../../lib/sdk11/components/toolchain/cmsis/include/arm_math.h" />
+                <file file_name="../../lib/sdk11/components/toolchain/cmsis/include/cmsis_armcc.h" />
+                <file file_name="../../lib/sdk11/components/toolchain/cmsis/include/cmsis_armcc_V6.h" />
+                <file file_name="../../lib/sdk11/components/toolchain/cmsis/include/cmsis_gcc.h" />
+                <file file_name="../../lib/sdk11/components/toolchain/cmsis/include/core_cm0.h" />
+                <file file_name="../../lib/sdk11/components/toolchain/cmsis/include/core_cm0plus.h" />
+                <file file_name="../../lib/sdk11/components/toolchain/cmsis/include/core_cm3.h" />
+                <file file_name="../../lib/sdk11/components/toolchain/cmsis/include/core_cm4.h" />
+                <file file_name="../../lib/sdk11/components/toolchain/cmsis/include/core_cm7.h" />
+                <file file_name="../../lib/sdk11/components/toolchain/cmsis/include/core_cmFunc.h" />
+                <file file_name="../../lib/sdk11/components/toolchain/cmsis/include/core_cmInstr.h" />
+                <file file_name="../../lib/sdk11/components/toolchain/cmsis/include/core_cmSimd.h" />
+              </folder>
+            </folder>
+          </folder>
+        </folder>
+      </folder>
+      <folder Name="softdevice">
+        <folder Name="s132">
+          <folder Name="6.0.0">
+            <folder Name="headers">
+              <file file_name="../../lib/softdevice/s132/6.0.0/headers/ble.h" />
+              <file file_name="../../lib/softdevice/s132/6.0.0/headers/ble_err.h" />
+              <file file_name="../../lib/softdevice/s132/6.0.0/headers/ble_gap.h" />
+              <file file_name="../../lib/softdevice/s132/6.0.0/headers/ble_gatt.h" />
+              <file file_name="../../lib/softdevice/s132/6.0.0/headers/ble_gattc.h" />
+              <file file_name="../../lib/softdevice/s132/6.0.0/headers/ble_gatts.h" />
+              <file file_name="../../lib/softdevice/s132/6.0.0/headers/ble_hci.h" />
+              <file file_name="../../lib/softdevice/s132/6.0.0/headers/ble_l2cap.h" />
+              <file file_name="../../lib/softdevice/s132/6.0.0/headers/ble_ranges.h" />
+              <file file_name="../../lib/softdevice/s132/6.0.0/headers/ble_types.h" />
+              <file file_name="../../lib/softdevice/s132/6.0.0/headers/nrf_error.h" />
+              <file file_name="../../lib/softdevice/s132/6.0.0/headers/nrf_error_sdm.h" />
+              <file file_name="../../lib/softdevice/s132/6.0.0/headers/nrf_error_soc.h" />
+              <file file_name="../../lib/softdevice/s132/6.0.0/headers/nrf_nvic.h" />
+              <file file_name="../../lib/softdevice/s132/6.0.0/headers/nrf_sdm.h" />
+              <file file_name="../../lib/softdevice/s132/6.0.0/headers/nrf_soc.h" />
+              <file file_name="../../lib/softdevice/s132/6.0.0/headers/nrf_svc.h" />
+              <folder Name="nrf52">
+                <file file_name="../../lib/softdevice/s132/6.0.0/headers/nrf52/nrf_mbr.h" />
+              </folder>
+            </folder>
+          </folder>
+        </folder>
+      </folder>
+    </folder>
+    <configuration
+      Name="Debug Size++"
+      link_use_linker_script_file="No"
+      linker_section_placement_file="flash_placement.xml" />
+  </project>
+  <configuration
+    Name="Debug Single"
+    c_preprocessor_definitions="DEBUG"
+    gcc_debugging_level="Level 3"
+    gcc_optimization_level="None" />
+  <configuration
+    Name="Release"
+    c_preprocessor_definitions="NDEBUG"
+    gcc_debugging_level="None"
+    gcc_omit_frame_pointer="Yes"
+    gcc_optimization_level="Level 1" />
+  <configuration Name="Debug Size++" />
+</solution>

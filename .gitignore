@@ -30,3 +30,5 @@
 *.dSYM/
 *.su
 *_build/
+
+src/segger/Output
