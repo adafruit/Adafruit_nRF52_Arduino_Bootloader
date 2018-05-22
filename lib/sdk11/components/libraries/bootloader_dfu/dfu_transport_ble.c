@@ -725,8 +725,6 @@ static void advertising_start(void)
         err_code = sd_ble_gap_adv_start(_adv_handle, BLE_CONN_CFG_HIGH_BANDWIDTH);
         APP_ERROR_CHECK(err_code);
 
-//        led_on(ADVERTISING_LED_PIN_NO);
-
         m_is_advertising = true;
     }
 }
@@ -742,8 +740,6 @@ static void advertising_stop(void)
 
         err_code = sd_ble_gap_adv_stop(_adv_handle);
         APP_ERROR_CHECK(err_code);
-
-//        led_off(ADVERTISING_LED_PIN_NO);
 
         m_is_advertising = false;
     }
@@ -764,7 +760,6 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
         case BLE_GAP_EVT_CONNECTED:
             blinky_ota_connected();
             led_on(LED_BLUE);
-//            led_off(ADVERTISING_LED_PIN_NO);
 
             m_conn_handle    = p_ble_evt->evt.gap_evt.conn_handle;
             m_is_advertising = false;
@@ -944,21 +939,6 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
     on_ble_evt(p_ble_evt);
 }
 
-
-/**@brief       Function for the LEDs initialization.
- *
- * @details     Initializes all LEDs used by this application.
- */
-static void leds_init(void)
-{
-      // Adafruit: already done in bootloader's main
-//    nrf_gpio_cfg_output(ADVERTISING_LED_PIN_NO);
-//    nrf_gpio_cfg_output(CONNECTED_LED_PIN_NO);
-//    led_off(ADVERTISING_LED_PIN_NO);
-//    led_off(CONNECTED_LED_PIN_NO);
-}
-
-
 /**@brief     Function for the GAP initialization.
  *
  * @details   This function will setup all the necessary GAP (Generic Access Profile) parameters of
@@ -1061,8 +1041,6 @@ uint32_t dfu_transport_ble_update_start(void)
 
     m_tear_down_in_progress = false;
     m_pkt_type              = PKT_TYPE_INVALID;
-
-    leds_init();
 
     dfu_register_callback(dfu_cb_handler);
 
