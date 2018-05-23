@@ -26,18 +26,18 @@
     <ProgramSection alignment="8" size="__STACKSIZE_PROCESS__" load="No" name=".stack_process" />
   </MemorySegment>
   <MemorySegment name="$(FLASH2_NAME:BOOTLOADER_SETTINGS)">
-    <ProgramSection alignment="4" load="No" name=".bootloaderSettings" />
+    <ProgramSection alignment="4" load="No" keep="Yes" name=".bootloaderSettings" />
   </MemorySegment>
   <MemorySegment name="$(FLASH3_NAME:MBR_PARAMS_PAGE)">
-    <ProgramSection alignment="4" load="No" name=".mbrParamsPage" keep="Yes" />
+    <ProgramSection alignment="4" load="No" keep="Yes" name=".mbrParamsPage" />
   </MemorySegment>
   <MemorySegment name="$(FLASH4_NAME:UICR_BOOTLOADER)">
-    <ProgramSection alignment="4" load="Yes" name=".uicrBootStartAddress" keep="Yes" />
+    <ProgramSection alignment="4" load="Yes" keep="Yes" name=".uicrBootStartAddress" />
   </MemorySegment>
   <MemorySegment name="$(FLASH5_NAME:UICR_MBR_PARAM_PAGE)">
-    <ProgramSection alignment="4" load="Yes" name=".uicrMbrParamsPageAddress" keep="Yes" />
+    <ProgramSection alignment="4" load="No" keep="Yes" name=".uicrMbrParamsPageAddress" />
   </MemorySegment>
   <MemorySegment name="$(RAM2_NAME:NOINIT)">
-    <ProgramSection alignment="4" load="No" name=".noinit" />
+    <ProgramSection alignment="4" load="No" keep="Yes" name=".noinit" />
   </MemorySegment>
 </Root>

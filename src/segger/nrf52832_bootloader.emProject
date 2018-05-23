@@ -157,7 +157,7 @@
               <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_ble_svc_internal.h" />
               <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_dual_bank.c">
                 <configuration
-                  Name="Debug Size++"
+                  Name="Debug Single"
                   build_exclude_from_build="Yes" />
               </file>
               <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_init.h" />
@@ -265,10 +265,6 @@
         </folder>
       </folder>
     </folder>
-    <configuration
-      Name="Debug Size++"
-      link_use_linker_script_file="No"
-      linker_section_placement_file="flash_placement.xml" />
   </project>
   <configuration
     Name="Debug Single"
@@ -281,5 +277,4 @@
     gcc_debugging_level="None"
     gcc_omit_frame_pointer="Yes"
     gcc_optimization_level="Level 1" />
-  <configuration Name="Debug Size++" />
 </solution>

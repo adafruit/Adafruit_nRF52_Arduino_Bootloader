@@ -33,10 +33,11 @@
 
 #define IRQ_ENABLED            0x01                    /**< Field identifying if an interrupt is enabled. */
 
-#ifdef NRF52
+/**< Maximum number of interrupts available. */
+#if defined(NRF52832_XXAA)
 #define MAX_NUMBER_INTERRUPTS  39
-#else
-#define MAX_NUMBER_INTERRUPTS  32                                       /**< Maximum number of interrupts available. */
+#elif defined(NRF52840_XXAA)
+#define MAX_NUMBER_INTERRUPTS  48
 #endif
 
 /**@brief Enumeration for specifying current bootloader status.
