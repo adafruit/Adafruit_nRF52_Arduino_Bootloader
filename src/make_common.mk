@@ -92,7 +92,6 @@ C_SOURCE_FILES += $(SDK_PATH)/libraries/timer/app_timer.c
 C_SOURCE_FILES += $(SDK_PATH)/libraries/timer/app_timer_appsh.c
 C_SOURCE_FILES += $(SDK_PATH)/libraries/scheduler/app_scheduler.c
 C_SOURCE_FILES += $(SDK_PATH)/libraries/util/app_error.c
-C_SOURCE_FILES += $(SDK_PATH)/libraries/util/app_error_weak.c
 C_SOURCE_FILES += $(SDK_PATH)/libraries/util/app_util_platform.c
 C_SOURCE_FILES += $(SDK_PATH)/libraries/crc16/crc16.c
 C_SOURCE_FILES += $(SDK_PATH)/libraries/hci/hci_mem_pool.c
@@ -351,6 +350,7 @@ flash_feather52: BOOTLOADER_WITH_SD_NAME := feather52_bootloader_$(BOOTLOADER_SD
 flash_feather52: feather52
 	@echo Flashing: $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_SD_NAME).hex
 	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_SD_NAME).hex -f nrf52 --chiperase --reset
+	#nrfjprog -s 268003250 --program $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_SD_NAME).hex -f nrf52 --chiperase --reset
 
 flash_metro52: BOOTLOADER_WITH_SD_NAME := metro52_bootloader_$(BOOTLOADER_SD_SUFFIX)
 flash_metro52: metro52
@@ -360,3 +360,4 @@ flash_metro52: metro52
 flash_sd:
 	@echo Flashing: $(SD_HEX)
 	nrfjprog --program $(SD_HEX) -f nrf52 --chiperase --reset
+	#nrfjprog -s 268003250 --program $(SD_HEX) -f nrf52 --chiperase --reset
