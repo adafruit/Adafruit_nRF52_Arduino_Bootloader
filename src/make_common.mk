@@ -343,9 +343,11 @@ echosize:
 	$(NO_ECHO)$(SIZE) $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
 	-@echo ''
 
+.PHONY: clean
 clean:
 	@$(RM) $(BUILD_DIRECTORIES)
 
+# Flash on going code
 flash_feather52: BOOTLOADER_WITH_SD_NAME := feather52_bootloader_$(BOOTLOADER_SD_SUFFIX)
 flash_feather52: feather52
 	@echo Flashing: $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_SD_NAME).hex
@@ -361,3 +363,16 @@ flash_sd:
 	@echo Flashing: $(SD_HEX)
 	nrfjprog --program $(SD_HEX) -f nrf52 --chiperase --reset
 	#nrfjprog -s 268003250 --program $(SD_HEX) -f nrf52 --chiperase --reset
+
+# Flash previous version
+.PHONY: flash_feather52_510s  flash_feather52_510d flash_feather52_050d
+flash_feather52_510s: BOOTLOADER_HEX := $(FINAL_BIN_DIR)/feather52/5.1.0/single/feather52_bootloader_5.1.0_s132_single.hex
+flash_feather52_510s:
+	@echo Flashing: $(BOOTLOADER_HEX)
+	nrfjprog --program $(BOOTLOADER_HEX) -f nrf52 --chiperase --reset
+
+flash_feather52_050d: BOOTLOADER_HEX := $(FINAL_BIN_DIR)/feather52/0.5.0/dual/feather52_bootloader_v050_s132_v201_dual.hex
+flash_feather52_050d:
+	@echo Flashing: $(BOOTLOADER_HEX)
+	nrfjprog --program $(BOOTLOADER_HEX) -f nrf52 --chiperase --reset
+		
