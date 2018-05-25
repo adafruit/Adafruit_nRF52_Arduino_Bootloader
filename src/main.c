@@ -53,8 +53,6 @@
 
 #include "pstorage_platform.h"
 #include "nrf_mbr.h"
-//#include "nrf_log.h"
-
 #include "nrf_wdt.h"
 #include "nrf_delay.h"
 #include "pstorage.h"
@@ -82,8 +80,8 @@
 #define APP_TIMER_PRESCALER                 0                                /**< Value of the RTC1 PRESCALER register. */
 #define APP_TIMER_OP_QUEUE_SIZE             4                                /**< Size of timer operation queues. */
 
-#define SCHED_MAX_EVENT_DATA_SIZE           MAX(APP_TIMER_SCHED_EVT_SIZE, 0) /**< Maximum size of scheduler events. */
-#define SCHED_QUEUE_SIZE                    20                               /**< Maximum number of events in the scheduler queue. */
+#define SCHED_MAX_EVENT_DATA_SIZE           sizeof(app_timer_event_t)        /**< Maximum size of scheduler events. */
+#define SCHED_QUEUE_SIZE                    30                               /**< Maximum number of events in the scheduler queue. */
 
 // Helper function
 #define memclr(buffer, size)                memset(buffer, 0, size)
@@ -226,16 +224,13 @@ void blinky_ota_disconneted(void)
  */
 static uint32_t ble_stack_init(bool init_softdevice)
 {
-  uint32_t         err_code;
   if (init_softdevice)
   {
     sd_mbr_command_t com = { .command = SD_MBR_COMMAND_INIT_SD };
-    err_code = sd_mbr_command(&com);
-    APP_ERROR_CHECK(err_code);
+    APP_ERROR_CHECK( sd_mbr_command(&com) );
   }
 
-  err_code = sd_softdevice_vector_table_base_set(BOOTLOADER_REGION_START);
-  APP_ERROR_CHECK(err_code);
+  APP_ERROR_CHECK( sd_softdevice_vector_table_base_set(BOOTLOADER_REGION_START) );
 
   // Enable Softdevice
   nrf_clock_lf_cfg_t clock_cfg =
@@ -246,7 +241,7 @@ static uint32_t ble_stack_init(bool init_softdevice)
       .rc_temp_ctiv = 2,
       .accuracy     = NRF_CLOCK_LF_ACCURACY_20_PPM
 #else
-      // need to select source first
+      // not working
       .source       = NRF_CLOCK_LF_SRC_XTAL,
       .rc_ctiv      = 0,
       .rc_temp_ctiv = 0,
@@ -268,47 +263,30 @@ static uint32_t ble_stack_init(bool init_softdevice)
   blecfg.gap_cfg.role_count_cfg.periph_role_count  = 1;
   blecfg.gap_cfg.role_count_cfg.central_role_count = 0;
   blecfg.gap_cfg.role_count_cfg.central_sec_count  = 0;
-  err_code = sd_ble_cfg_set(BLE_GAP_CFG_ROLE_COUNT, &blecfg, ram_start);
+  APP_ERROR_CHECK( sd_ble_cfg_set(BLE_GAP_CFG_ROLE_COUNT, &blecfg, ram_start) );
 
   // NRF_DFU_BLE_REQUIRES_BONDS
   varclr(&blecfg);
   blecfg.gatts_cfg.service_changed.service_changed = 1;
-  err_code = sd_ble_cfg_set(BLE_GATTS_CFG_SERVICE_CHANGED, &blecfg, ram_start);
-  VERIFY_SUCCESS(err_code);
+  APP_ERROR_CHECK( sd_ble_cfg_set(BLE_GATTS_CFG_SERVICE_CHANGED, &blecfg, ram_start) );
 
   // ATT MTU
   varclr(&blecfg);
   blecfg.conn_cfg.conn_cfg_tag = BLE_CONN_CFG_HIGH_BANDWIDTH;
   blecfg.conn_cfg.params.gatt_conn_cfg.att_mtu = BLEGATT_ATT_MTU_MAX;
-  err_code = sd_ble_cfg_set(BLE_CONN_CFG_GATT, &blecfg, ram_start);
-  VERIFY_SUCCESS ( err_code );
+  APP_ERROR_CHECK( sd_ble_cfg_set(BLE_CONN_CFG_GATT, &blecfg, ram_start) );
 
   // Event Length + HVN queue + WRITE CMD queue setting affecting bandwidth
   varclr(&blecfg);
   blecfg.conn_cfg.conn_cfg_tag = BLE_CONN_CFG_HIGH_BANDWIDTH;
   blecfg.conn_cfg.params.gap_conn_cfg.conn_count   = 1;
   blecfg.conn_cfg.params.gap_conn_cfg.event_length = BLEGAP_EVENT_LENGTH;
-  err_code = sd_ble_cfg_set(BLE_CONN_CFG_GAP, &blecfg, ram_start);
-  VERIFY_SUCCESS ( err_code );
+  APP_ERROR_CHECK( sd_ble_cfg_set(BLE_CONN_CFG_GAP, &blecfg, ram_start) );
 
   // Enable BLE stack.
-  err_code = sd_ble_enable(&ram_start);
-  VERIFY_SUCCESS(err_code);
+  APP_ERROR_CHECK( sd_ble_enable(&ram_start) );
 
-  return err_code;
-}
-
-
-/**
- * @brief Function for event scheduler initialization.
- */
-static void scheduler_init(void)
-{
-  APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
-
-  /* Initialize a blinky timer to show that we're in bootloader */
-  (void) app_timer_create(&blinky_timer_id, APP_TIMER_MODE_REPEATED, blinky_handler);
-  app_timer_start(blinky_timer_id, APP_TIMER_TICKS(LED_BLINK_INTERVAL, APP_TIMER_PRESCALER), NULL);
+  return NRF_SUCCESS;
 }
 
 
@@ -317,8 +295,6 @@ static void scheduler_init(void)
  */
 int main(void)
 {
-  uint32_t err_code;
-
   // SD is already Initialized in case of BOOTLOADER_DFU_OTA_MAGIC
   bool sd_inited = (NRF_POWER->GPREGRET == BOOTLOADER_DFU_OTA_MAGIC);
 
@@ -350,26 +326,28 @@ int main(void)
   led_pin_init(LED_BLUE); // on metro52 will override FRESET
 
   // Initialize timer module, already configred to use with the scheduler.
+  APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
   APP_TIMER_APPSH_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, true);
 
+  /* Initialize a blinky timer to show that we're in bootloader */
+  (void) app_timer_create(&blinky_timer_id, APP_TIMER_MODE_REPEATED, blinky_handler);
+
+  // Init bootloader
   (void) bootloader_init();
 
   if (bootloader_dfu_sd_in_progress())
   {
-    err_code = bootloader_dfu_sd_update_continue();
-    APP_ERROR_CHECK(err_code);
+    APP_ERROR_CHECK( bootloader_dfu_sd_update_continue() );
 
     ble_stack_init(!sd_inited);
-    scheduler_init();
+    app_timer_start(blinky_timer_id, APP_TIMER_TICKS(LED_BLINK_INTERVAL, APP_TIMER_PRESCALER), NULL);
 
-    err_code = bootloader_dfu_sd_update_finalize();
-    APP_ERROR_CHECK(err_code);
+    APP_ERROR_CHECK( bootloader_dfu_sd_update_finalize() );
   }
   else
   {
-    // If stack is present then continue initialization of bootloader.
     ble_stack_init(!sd_inited);
-    scheduler_init();
+    app_timer_start(blinky_timer_id, APP_TIMER_TICKS(LED_BLINK_INTERVAL, APP_TIMER_PRESCALER), NULL);
   }
 
   /* For metro52 LED_BLUE is muxed with FRESET. We only init FRESET BUTTON
@@ -392,8 +370,7 @@ int main(void)
   if (dfu_start || (!bootloader_app_is_valid(DFU_BANK_0_REGION_START)))
   {
     // Initiate an update of the firmware.
-    err_code = bootloader_dfu_start(_ota_update, 0);
-    APP_ERROR_CHECK(err_code);
+    APP_ERROR_CHECK( bootloader_dfu_start(_ota_update, 0) );
   }
   else
   {
@@ -514,9 +491,21 @@ void adafruit_factory_reset(void)
 //--------------------------------------------------------------------+
 // Error Handler
 //--------------------------------------------------------------------+
+#if defined(__ARM_ARCH_7M__) || defined (__ARM_ARCH_7EM__)
+
+#define verify_breakpoint() \
+  do {\
+    volatile uint32_t* ARM_CM_DHCSR =  ((volatile uint32_t*) 0xE000EDF0UL); /* Cortex M CoreDebug->DHCSR */ \
+    if ( (*ARM_CM_DHCSR) & 1UL ) __asm("BKPT #0\n"); /* Only halt mcu if debugger is attached */\
+  } while(0)
+
+#else
+#define verify_breakpoint()
+#endif
+
 void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 {
-  //verify_breakpoint();
+  verify_breakpoint();
   NVIC_SystemReset();
 }
 

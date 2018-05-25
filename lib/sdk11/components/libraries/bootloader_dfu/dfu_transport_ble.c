@@ -61,7 +61,7 @@ enum { BLE_CONN_CFG_HIGH_BANDWIDTH = 1 };
 #define MAX_CONN_PARAMS_UPDATE_COUNT         3                                                       /**< Number of attempts before giving up the connection parameter negotiation. */
 
 #define APP_ADV_INTERVAL                     MSEC_TO_UNITS(25, UNIT_0_625_MS)                        /**< The advertising interval (25 ms.). */
-#define APP_ADV_TIMEOUT_IN_SECONDS           BLE_GAP_ADV_TIMEOUT_GENERAL_UNLIMITED                   /**< The advertising timeout in units of seconds. This is set to @ref BLE_GAP_ADV_TIMEOUT_GENERAL_UNLIMITED so that the advertisement is done as long as there there is a call to @ref dfu_transport_close function.*/
+#define APP_ADV_TIMEOUT                      BLE_GAP_ADV_TIMEOUT_GENERAL_UNLIMITED                   /**< The advertising timeout in units of seconds. This is set to @ref BLE_GAP_ADV_TIMEOUT_GENERAL_UNLIMITED so that the advertisement is done as long as there there is a call to @ref dfu_transport_close function.*/
 #define APP_DIRECTED_ADV_TIMEOUT             50                                                       /**< number of direct advertisement (each lasting 1.28seconds). */
 #define PEER_ADDRESS_TYPE_INVALID            0xFF                                                    /**< Value indicating that no valid peer address exists. This will be the case when a private resolvable address is used in which case there is no address available but instead an IRK is present. */
 #define PEER_ADDRESS_TYPE_INVALID            0xFF                                                    /**< Value indicating that no valid peer address exists. This will be the case when a private resolvable address is used in which case there is no address available but instead an IRK is present. */
@@ -97,7 +97,6 @@ typedef enum
 } pkt_type_t;
 
 static ble_gap_sec_params_t m_sec_params;                                                            /**< Security requirements for this application. */
-static ble_gap_adv_params_t m_adv_params;                                                            /**< Parameters to be passed to the stack when starting advertising. */
 static ble_dfu_t            m_dfu;                                                                   /**< Structure used to identify the Device Firmware Update service. */
 static pkt_type_t           m_pkt_type;                                                              /**< Type of packet to be expected from the DFU Controller. */
 static uint8_t              m_update_mode;                                                           /**< Type of update mode specified by the DFU Controller. */
@@ -661,72 +660,58 @@ static void advertising_init(ble_data_t* adv_data, uint8_t adv_flags)
  */
 static void advertising_start(void)
 {
-    if (!m_is_advertising)
+  if (!m_is_advertising)
+  {
+    uint8_t adv_buf[BLE_GAP_ADV_SET_DATA_SIZE_MAX];
+    ble_gap_adv_data_t gap_adv =
     {
-        uint32_t err_code;
+        .adv_data = { .p_data = adv_buf, .len = 0}
+    };
 
-        uint8_t adv_buf[BLE_GAP_ADV_SET_DATA_SIZE_MAX];
-        ble_gap_adv_data_t gap_adv =
-        {
-            .adv_data = { .p_data = adv_buf, .len = 0}
+    uint8_t  adv_flag = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
+    ble_gap_adv_params_t m_adv_params =
+    {
+        .properties.type = BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED,
+        .p_peer_addr     = NULL,
+        .filter_policy   = BLE_GAP_ADV_FP_ANY,
+        .interval        = APP_ADV_INTERVAL,
+        .duration        = APP_ADV_TIMEOUT,
+        .primary_phy     = BLE_GAP_PHY_1MBPS,
+    };
+
+    if (m_ble_peer_data_valid)
+    {
+      ble_gap_irk_t empty_irk = {{0}};
+
+      if ( memcmp(m_ble_peer_data.irk.irk, empty_irk.irk, sizeof(empty_irk.irk)) == 0 )
+      {
+        // No IRK, general discovery
+      }
+      else
+      {
+        // Bonded previously
+        m_whitelist[0] = &m_ble_peer_data.addr;
+        APP_ERROR_CHECK( sd_ble_gap_whitelist_set(m_whitelist, 1) );
+        ble_gap_id_key_t id_key = {
+            .id_info      = m_ble_peer_data.irk,
+            .id_addr_info = m_ble_peer_data.addr
         };
 
-        // Initialize advertising parameters (used when starting advertising).
-        memset(&m_adv_params, 0, sizeof(m_adv_params));
+        m_gap_ids[0] = &id_key;
+        APP_ERROR_CHECK( sd_ble_gap_device_identities_set(m_gap_ids, NULL, 1) );
 
-        if (m_ble_peer_data_valid)
-        {
-            ble_gap_irk_t empty_irk = {{0}};
-
-            if (memcmp(m_ble_peer_data.irk.irk, empty_irk.irk, sizeof(empty_irk.irk)) == 0)
-            {
-                advertising_init(&gap_adv.adv_data, BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE);
-                m_adv_params.properties.type     = BLE_GAP_ADV_TYPE_CONNECTABLE_NONSCANNABLE_DIRECTED_HIGH_DUTY_CYCLE;
-                m_adv_params.p_peer_addr         = &m_ble_peer_data.addr;
-                m_adv_params.filter_policy       = BLE_GAP_ADV_FP_ANY;
-                m_adv_params.interval            = 0;
-                m_adv_params.duration            = 0;
-            }
-            else
-            {
-                m_whitelist[0] = &m_ble_peer_data.addr;
-                err_code = sd_ble_gap_whitelist_set(m_whitelist, 1);
-                APP_ERROR_CHECK(err_code);
-
-                ble_gap_id_key_t id_key = {
-                    .id_info      = m_ble_peer_data.irk,
-                    .id_addr_info = m_ble_peer_data.addr
-                };
-
-                m_gap_ids[0] = &id_key;
-                err_code = sd_ble_gap_device_identities_set(m_gap_ids, NULL, 1);
-                APP_ERROR_CHECK(err_code);
-
-                advertising_init(&gap_adv.adv_data, BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED);
-                m_adv_params.properties.type     = BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED;
-                m_adv_params.filter_policy       = BLE_GAP_ADV_FP_FILTER_CONNREQ;
-                m_adv_params.interval            = APP_ADV_INTERVAL;
-                m_adv_params.duration            = APP_ADV_TIMEOUT_IN_SECONDS*100;
-            }
-        }
-        else
-        {
-            advertising_init(&gap_adv.adv_data, BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE);
-            m_adv_params.properties.type     = BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED;
-            m_adv_params.p_peer_addr         = NULL;
-            m_adv_params.filter_policy       = BLE_GAP_ADV_FP_ANY;
-            m_adv_params.interval            = APP_ADV_INTERVAL;
-            m_adv_params.duration            = APP_ADV_TIMEOUT_IN_SECONDS*100;
-        }
-
-        err_code = sd_ble_gap_adv_set_configure(&_adv_handle, &gap_adv, &m_adv_params);
-        APP_ERROR_CHECK(err_code);
-
-        err_code = sd_ble_gap_adv_start(_adv_handle, BLE_CONN_CFG_HIGH_BANDWIDTH);
-        APP_ERROR_CHECK(err_code);
-
-        m_is_advertising = true;
+        adv_flag = BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED;
+        m_adv_params.filter_policy = BLE_GAP_ADV_FP_FILTER_BOTH;
+      }
     }
+
+    advertising_init(&gap_adv.adv_data, adv_flag);
+
+    APP_ERROR_CHECK( sd_ble_gap_adv_set_configure(&_adv_handle, &gap_adv, &m_adv_params) );
+    APP_ERROR_CHECK( sd_ble_gap_adv_start(_adv_handle, BLE_CONN_CFG_HIGH_BANDWIDTH) );
+
+    m_is_advertising = true;
+  }
 }
 
 
