@@ -162,7 +162,11 @@
               </file>
               <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_init.h" />
               <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_init_template.c" />
-              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_single_bank.c" />
+              <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_single_bank.c">
+                <configuration
+                  Name="Debug Dual"
+                  build_exclude_from_build="Yes" />
+              </file>
               <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_transport.h" />
               <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_transport_ble.c" />
               <file file_name="../../lib/sdk11/components/libraries/bootloader_dfu/dfu_transport_serial.c" />
@@ -265,6 +269,7 @@
         </folder>
       </folder>
     </folder>
+    <configuration Connection="USB 268003250" Name="Debug Single" />
   </project>
   <configuration
     Name="Debug Single"
@@ -277,4 +282,5 @@
     gcc_debugging_level="None"
     gcc_omit_frame_pointer="Yes"
     gcc_optimization_level="Level 1" />
+  <configuration Name="Debug Dual" />
 </solution>
