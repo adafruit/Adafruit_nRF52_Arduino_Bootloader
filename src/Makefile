@@ -10,32 +10,25 @@
 # - SD_VERSION : e.g 5.1.0
 # - SD_HEX     : path to bootloader hex binary
 #******************************************************************************
+VERSION_SINGLEBANK = 1
+
 VERSION_MAJOR    = 6
 VERSION_MINOR    = 0
 VERSION_REVISION = 0
 
-SDK_PATH         = ../../lib/sdk11/components
-SRC_PATH         = ..
+SDK_PATH         = ../lib/sdk11/components
+SRC_PATH         = .
 
 SD_NAME          = s132
 SD_VERSION       = 6.0.0
 
 MK_DIS_FIRMWARE  = "$(subst s,S,$(SD_NAME)) $(SD_VERSION), $(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)"
 
-SD_PATH          = ../../lib/softdevice/$(SD_NAME)/$(SD_VERSION)
+SD_PATH          = ../lib/softdevice/$(SD_NAME)/$(SD_VERSION)
 SD_HEX           = $(SD_PATH)/hex/$(SD_NAME)_nrf52_$(SD_VERSION)_softdevice.hex
 LINKER_SCRIPT    = $(SRC_PATH)/bootloader_$(SD_NAME).ld
 
-ifeq ($(VERSION_SINGLEBANK),1)
-BANKMODE = single
-C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/dfu_single_bank.c
-else
-BANKMODE = dual
-C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/dfu_dual_bank.c
-endif
-
-BOOTLOADER_SD_SUFFIX = $(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)_$(SD_NAME)_$(BANKMODE)
-FINAL_BIN_DIR := ../../bin
+BOOTLOADER_SD_SUFFIX = $(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)_$(SD_NAME)
 
 #******************************************************************************
 # Tool configure
@@ -87,6 +80,7 @@ C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/bootloader_util.c
 C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/dfu_init_template.c
 C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/dfu_transport_serial.c
 C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/dfu_transport_ble.c
+C_SOURCE_FILES += $(SDK_PATH)/libraries/bootloader_dfu/dfu_single_bank.c
 
 C_SOURCE_FILES += $(SDK_PATH)/libraries/timer/app_timer.c
 C_SOURCE_FILES += $(SDK_PATH)/libraries/timer/app_timer_appsh.c
@@ -248,21 +242,20 @@ default: all
 #building all targets
 all:
 	@$(MAKE) -s -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e clean
-	@echo Making Feather52 board
+	@echo Making feather52832 board
 	@echo ----------------------
-	@$(MAKE) -s -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e feather52
-	@$(MAKE) -s -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e clean
-	@echo Making Metro52 board
-	@echo --------------------
-	@$(MAKE) -s -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e metro52
+	@$(MAKE) -s -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e feather52832
+	#@$(MAKE) -s -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e clean
+	#@echo Making Metro52 board
+	#@echo --------------------
+	#@$(MAKE) -s -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e metro52
 
 #target for printing all targets
 help:
 	@echo following targets are available:
-	@echo - feather52       : build for Feather nrf52 board
-	@echo - metro52         : build for Metro nrf52 board
-	@echo - flash_feather52 : flash Feather nrf52 board
-	@echo - flash_metro52   : flash Metro nrf52 board
+	@echo - feather52832       : build for Feather nRF52832 board
+	@echo - flash_feather52832 : flash Feather nRF52832 board
+	@echo - flash_sd           : flash Softdevice only
 
 C_SOURCE_FILE_NAMES = $(notdir $(C_SOURCE_FILES))
 C_PATHS = $(call remduplicates, $(dir $(C_SOURCE_FILES) ) )
@@ -282,10 +275,10 @@ export FINAL_BIN_DIR
 BOOTLOADER_WITH_SD_NAME := $(OUTPUT_FILENAME)_$(BOOTLOADER_SD_SUFFIX)
 
 # Target for Feather nrf52 board
-feather52: OUTPUT_FILENAME := feather52_bootloader
-feather52: FINAL_BIN_DIR := $(FINAL_BIN_DIR)/feather52/$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)/$(BANKMODE)
-feather52: CFLAGS += -DBOARD_FEATHER52
-feather52: $(BUILD_DIRECTORIES) $(OBJECTS)
+feather52832: OUTPUT_FILENAME := feather52832_bootloader
+feather52832: FINAL_BIN_DIR := ../bin/feather52832/$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)
+feather52832: CFLAGS += -DBOARD_FEATHER52
+feather52832: $(BUILD_DIRECTORIES) $(OBJECTS)
 	@echo Linking target: $(OUTPUT_FILENAME).out
 	$(NO_ECHO)$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -lm -o $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
 	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e finalize
@@ -348,8 +341,8 @@ clean:
 	@$(RM) $(BUILD_DIRECTORIES)
 
 # Flash on going code
-flash_feather52: BOOTLOADER_WITH_SD_NAME := feather52_bootloader_$(BOOTLOADER_SD_SUFFIX)
-flash_feather52: feather52
+flash_feather52832: BOOTLOADER_WITH_SD_NAME := feather52832_bootloader_$(BOOTLOADER_SD_SUFFIX)
+flash_feather52832: feather52832
 	@echo Flashing: $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_SD_NAME).hex
 	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_SD_NAME).hex -f nrf52 --chiperase --reset
 	#nrfjprog -s 268003250 --program $(OUTPUT_BINARY_DIRECTORY)/$(BOOTLOADER_WITH_SD_NAME).hex -f nrf52 --chiperase --reset
@@ -365,14 +358,14 @@ flash_sd:
 	#nrfjprog -s 268003250 --program $(SD_HEX) -f nrf52 --chiperase --reset
 
 # Flash previous version
-.PHONY: flash_feather52_510s  flash_feather52_510d flash_feather52_050d
-flash_feather52_510s: BOOTLOADER_HEX := $(FINAL_BIN_DIR)/feather52/5.1.0/single/feather52_bootloader_5.1.0_s132_single.hex
-flash_feather52_510s:
+.PHONY: flash_feather52832_510s  flash_feather52832_510d flash_feather52832_050d
+flash_feather52832_510s: BOOTLOADER_HEX := $(FINAL_BIN_DIR)/feather52832/5.1.0/single/feather52832_bootloader_5.1.0_s132_single.hex
+flash_feather52832_510s:
 	@echo Flashing: $(BOOTLOADER_HEX)
 	nrfjprog --program $(BOOTLOADER_HEX) -f nrf52 --chiperase --reset
 
-flash_feather52_050d: BOOTLOADER_HEX := $(FINAL_BIN_DIR)/feather52/0.5.0/dual/feather52_bootloader_v050_s132_v201_dual.hex
-flash_feather52_050d:
+flash_feather52832_050d: BOOTLOADER_HEX := $(FINAL_BIN_DIR)/feather52832/0.5.0/dual/feather52832_bootloader_v050_s132_v201_dual.hex
+flash_feather52832_050d:
 	@echo Flashing: $(BOOTLOADER_HEX)
 	nrfjprog --program $(BOOTLOADER_HEX) -f nrf52 --chiperase --reset
 		
