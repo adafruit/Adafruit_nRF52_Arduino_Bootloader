@@ -1,6 +1,6 @@
-# Adafruit nRF52 Arduino Bootloader
+# Adafruit nRF52832 Arduino Bootloader
 
-This repository contains the bootloader for Adafruit nRF52 boards.
+This repository contains the bootloader for Adafruit nRF52832 boards (512KB flash, 64KB SRAM).
 
 It is based on nRF52 SDK 11.0.0 using the classic serial and OTA update options, and adds the following additional features:
 
