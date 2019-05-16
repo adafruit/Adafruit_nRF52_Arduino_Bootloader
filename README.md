@@ -1,6 +1,6 @@
-# Adafruit nRF52832 Arduino Bootloader
+**IMPORTATNT: Development is moved to new repo https://github.com/adafruit/Adafruit_nRF52_Bootloader, this repo is obsolete and for reference only**
 
-**Development is moved to new repo https://github.com/adafruit/Adafruit_nRF52_Bootloader, this repo is obsolete and for reference only**
+# Adafruit nRF52832 Arduino Bootloader
 
 This repository contains the bootloader for Adafruit nRF52832 boards (512KB flash, 64KB SRAM).
 
@@ -13,7 +13,7 @@ It is based on nRF52 SDK 11.0.0 using the classic serial and OTA update options,
 
 Note: The bootloader .hex file gets merged with the SoftDevice .hex file since they are dependent on each other due to the OTA DFU support, and to avoid having to flash multiple binaries or any version conflicts between the two.
 
-# Files
+## Files
 
 - `feather52_bootloader_v050_s132_v201.hex` - Intel hex file containing the Bluefruit nRF52 Feather bootloader ans S132 (v2.0.1) SD, for use when flashing with Adalink or a JLink
 - `metro52_bootloader_v050_s132_v201.hex` - Intel hex file containing the Metro nRF52 bootloader ans S132 (v2.0.1) SD, for use when flashing with Adalink or a JLink
